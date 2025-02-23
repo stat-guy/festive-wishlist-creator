@@ -186,6 +186,13 @@ const Index = () => {
     }
   };
 
+  const handleMessage = useCallback(async (message: any) => {
+    console.log("Received message:", message);
+    
+    // Fetch the latest data after each message
+    await fetchWishlist();
+  }, []);
+
   useEffect(() => {
     if (isSpeaking) {
       // Initial fetch
@@ -199,13 +206,6 @@ const Index = () => {
   const conversation = useConversation({
     onMessage: handleMessage
   });
-
-  const handleMessage = useCallback(async (message: any) => {
-    console.log("Received message:", message);
-    
-    // Fetch the latest data after each message
-    await fetchWishlist();
-  }, []);
 
   const handleStartConversation = async () => {
     try {
