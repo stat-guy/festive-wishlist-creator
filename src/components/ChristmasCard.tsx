@@ -5,18 +5,20 @@ interface ChristmasCardProps {
   name: string;
   wishes: string[];
   location: string;
-  onSave?: () => void;
-  onRestart?: () => void;
-  onVideoSave?: () => void;
+  isCallActive?: boolean;
+  onStartCall?: () => void;
+  onEndCall?: () => void;
+  onEmailCard?: () => void;
 }
 
 const ChristmasCard: React.FC<ChristmasCardProps> = ({
   name,
   wishes,
   location,
-  onSave,
-  onRestart,
-  onVideoSave
+  isCallActive = false,
+  onStartCall,
+  onEndCall,
+  onEmailCard
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -90,29 +92,29 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
 
         <div className="mt-6 flex justify-between items-center gap-4">
           <button
-            onClick={onRestart}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
+            onClick={isCallActive ? onEndCall : onStartCall}
+            className={`px-6 py-2.5 rounded-lg transition-colors font-medium text-sm flex items-center gap-2 ${isCallActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
           >
-            Restart
+            {isCallActive ? (
+              <>
+                <span>End Call with Santa</span>
+                <span>📞</span>
+              </>
+            ) : (
+              <>
+                <span>Talk with Santa</span>
+                <span>🎅</span>
+              </>
+            )}
           </button>
           
-          <div className="flex gap-3">
-            <button
-              onClick={onSave}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-            >
-              <span>Save Card without Video</span>
-              <span>📄</span>
-            </button>
-            
-            <button
-              onClick={onVideoSave}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-            >
-              <span>Save Card with Video</span>
-              <span>🎥</span>
-            </button>
-          </div>
+          <button
+            onClick={onEmailCard}
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            <span>Email card to yourself</span>
+            <span>📧</span>
+          </button>
         </div>
       </div>
     </motion.div>

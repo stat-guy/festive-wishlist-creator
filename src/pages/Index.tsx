@@ -8,6 +8,7 @@ const Index: React.FC = () => {
     wishes: [],
     location: ''
   });
+  const [isCallActive, setIsCallActive] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -29,31 +30,29 @@ const Index: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const handleSave = () => {
-    // Implement save functionality
-    console.log('Saving card:', cardData);
+  const handleStartCall = () => {
+    setIsCallActive(true);
+    // Add call start logic here
   };
 
-  const handleRestart = () => {
-    setCardData({
-      name: '',
-      wishes: [],
-      location: ''
-    });
+  const handleEndCall = () => {
+    setIsCallActive(false);
+    // Add call end logic here
   };
 
-  const handleVideoSave = () => {
-    // Implement video save functionality
-    console.log('Saving card with video:', cardData);
+  const handleEmailCard = () => {
+    // Email functionality will be implemented later
+    console.log('Email card functionality coming soon');
   };
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6">
       <ChristmasCard
         {...cardData}
-        onSave={handleSave}
-        onRestart={handleRestart}
-        onVideoSave={handleVideoSave}
+        isCallActive={isCallActive}
+        onStartCall={handleStartCall}
+        onEndCall={handleEndCall}
+        onEmailCard={handleEmailCard}
       />
     </div>
   );
