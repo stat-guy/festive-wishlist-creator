@@ -1,69 +1,57 @@
-# Welcome to your Lovable project
+# Festive Wishlist Creator
 
-## Project info
+An interactive Santa Chat experience with real-time letter updates and voice interaction.
 
-**URL**: https://lovable.dev/projects/d26d0f8c-bd35-47fa-af24-506488d1af6f
+## Features
 
-## How can I edit this code?
+- Snowfall animation effect
+- Dynamic letter card updates
+- Countdown timer to Christmas
+- Age verification modal
+- Voice chat interface with Santa
+- Real-time updates via WebSocket
+- ElevenLabs voice integration
 
-There are several ways of editing your application.
+## Setup
 
-**Use Lovable**
+1. Install dependencies:
+```bash
+npm install
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d26d0f8c-bd35-47fa-af24-506488d1af6f) and start prompting.
+2. Configure environment variables:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+ELEVENLABS_API_KEY=your_elevenlabs_key
+```
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Run the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Database Schema
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The project uses Supabase with the following tables:
+- conversations
+- conversation_context
+- voice_interactions
+- elevenlabs_credentials
 
-**Use GitHub Codespaces**
+## Components
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- SantaChat: Main container component
+- Snowfall: Animated snow effect
+- ChristmasCard: Interactive letter template
+- CountdownTimer: Days until Christmas counter
+- AgeVerification: Age verification modal
+- VoiceChat: Voice interaction interface
 
-## What technologies are used for this project?
+## Contributing
 
-This project is built with .
+Contributions are welcome! Please read the contributing guidelines before submitting pull requests.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/d26d0f8c-bd35-47fa-af24-506488d1af6f) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+MIT
