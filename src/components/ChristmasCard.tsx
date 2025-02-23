@@ -1,62 +1,121 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
-import React from 'react';
-import { CardData } from '@/types/christmas';
-import { RefreshCw } from 'lucide-react';
-
-interface ChristmasCardProps extends CardData {
+interface ChristmasCardProps {
+  name: string;
+  wishes: string[];
+  location: string;
+  onSave?: () => void;
   onRestart?: () => void;
+  onVideoSave?: () => void;
 }
 
-const ChristmasCard: React.FC<ChristmasCardProps> = ({ name, wishes, location, onRestart }) => {
-  return (
-    <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
-      <div className="border-4 border-red-600 p-4 rounded-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-festive text-red-600">
-            My Letter to Santa
-          </h2>
-          {onRestart && (
-            <button
-              onClick={onRestart}
-              className="p-2 text-red-600 hover:text-red-700 transition-colors"
-              title="Start New Letter"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <p className="font-festive text-lg">Dear Santa,</p>
-            <p className="font-festive text-lg">My name is {name || '_______'}</p>
-          </div>
+const ChristmasCard: React.FC<ChristmasCardProps> = ({
+  name,
+  wishes,
+  location,
+  onSave,
+  onRestart,
+  onVideoSave
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
+  if (!isOpen) {
+    return (
+      <motion.div 
+        className="flex flex-col items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <button
+          onClick={() => setIsOpen(true)}
+          className="relative group bg-transparent border-2 border-red-600 text-red-600 hover:text-white px-8 py-4 rounded-full font-festive text-2xl overflow-hidden"
+        >
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            <span>✉️</span>
+            <span>Open Your Letter to Santa</span>
+          </span>
+          <div className="absolute inset-0 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="w-[600px] mx-auto bg-white rounded-lg overflow-hidden relative p-1"
+    >
+      {/* Candy Cane Border */}
+      <div 
+        className="absolute inset-0 rounded-lg" 
+        style={{
+          background: 'repeating-linear-gradient(45deg, #ff0000, #ff0000 10px, #ffffff 10px, #ffffff 20px)',
+          padding: '12px'
+        }}
+      />
+      
+      <div className="relative bg-white rounded-lg p-8 z-10">
+        <h1 className="text-3xl font-festive text-red-600 text-center mb-8">My Letter to Santa</h1>
+        
+        <div className="space-y-6 font-handwritten text-xl leading-relaxed">
+          <p>Dear Santa, my name is <span className="text-red-600 font-semibold">{name}</span></p>
+          
           <div>
-            <p className="font-festive text-lg">This Christmas, I wish for:</p>
-            <ul className="list-disc pl-6 font-festive">
-              {wishes && wishes.length > 0 ? (
-                wishes.map((wish, index) => (
-                  <li key={index} className="text-lg">{wish}</li>
-                ))
-              ) : (
-                <li className="text-lg">_______</li>
-              )}
+            <p>These are the presents I'm wishing for:</p>
+            <ul className="mt-4 space-y-3">
+              {wishes.map((wish, index) => (
+                <motion.li
+                  key={index}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.2 }}
+                  className="flex items-center gap-3"
+                >
+                  <span className="text-green-600">🎄</span>
+                  <span className="text-red-600">{wish}</span>
+                </motion.li>
+              ))}
             </ul>
           </div>
+          
+          <p>Thank you Santa!</p>
+        </div>
 
-          {location && (
-            <p className="font-festive text-lg">
-              I'll be celebrating in {location}!
-            </p>
-          )}
+        <div className="mt-12 text-center text-sm text-gray-600">
+          Made with ❤️ in the North Pole by ElevenLabs
+        </div>
 
-          <p className="font-festive text-lg text-right mt-4">
-            Thank you, Santa!
-          </p>
+        <div className="mt-6 flex justify-between items-center gap-4">
+          <button
+            onClick={onRestart}
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
+          >
+            Restart
+          </button>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={onSave}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              <span>Save Card without Video</span>
+              <span>📄</span>
+            </button>
+            
+            <button
+              onClick={onVideoSave}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+            >
+              <span>Save Card with Video</span>
+              <span>🎥</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
