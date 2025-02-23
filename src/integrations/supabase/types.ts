@@ -9,23 +9,67 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      conversations: {
+      conversation_context: {
         Row: {
+          context_type: string
+          context_value: Json
+          conversation_id: number | null
           created_at: string
           id: number
+        }
+        Insert: {
+          context_type: string
+          context_value: Json
+          conversation_id?: number | null
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          context_type?: string
+          context_value?: Json
+          conversation_id?: number | null
+          created_at?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_context_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          age_verified: boolean | null
+          celebration_details: Json | null
+          created_at: string
+          id: number
+          location: string | null
           name: string | null
+          voice_enabled: boolean | null
           wishlist: Json | null
         }
         Insert: {
+          age_verified?: boolean | null
+          celebration_details?: Json | null
           created_at?: string
           id?: never
+          location?: string | null
           name?: string | null
+          voice_enabled?: boolean | null
           wishlist?: Json | null
         }
         Update: {
+          age_verified?: boolean | null
+          celebration_details?: Json | null
           created_at?: string
           id?: never
+          location?: string | null
           name?: string | null
+          voice_enabled?: boolean | null
           wishlist?: Json | null
         }
         Relationships: []
@@ -51,18 +95,65 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_interactions: {
+        Row: {
+          audio_metadata: Json | null
+          conversation_id: number | null
+          created_at: string
+          id: number
+          interaction_type: string
+          response_text: string | null
+          transcription: string | null
+        }
+        Insert: {
+          audio_metadata?: Json | null
+          conversation_id?: number | null
+          created_at?: string
+          id?: never
+          interaction_type: string
+          response_text?: string | null
+          transcription?: string | null
+        }
+        Update: {
+          audio_metadata?: Json | null
+          conversation_id?: number | null
+          created_at?: string
+          id?: never
+          interaction_type?: string
+          response_text?: string | null
+          transcription?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_interactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      triggeradditemtowishlist: {
-        Args: {
-          itemkey: string
-          itemname: string
-        }
-        Returns: undefined
-      }
+      triggeradditemtowishlist:
+        | {
+            Args: {
+              itemkey: string
+              itemname: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              itemkey: string
+              itemname: string
+              priority?: number
+            }
+            Returns: undefined
+          }
       triggername: {
         Args: {
           name: string
@@ -72,6 +163,12 @@ export type Database = {
       triggerremoveitemfromwishlist: {
         Args: {
           itemkey: string
+        }
+        Returns: undefined
+      }
+      updatecelebrationdetails: {
+        Args: {
+          details: Json
         }
         Returns: undefined
       }

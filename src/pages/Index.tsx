@@ -1,25 +1,183 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConversation } from "@11labs/react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Snowfall Animation Component
+const Snowfall = () => {
+  const [snowflakes, setSnowflakes] = useState([]);
+
+  useEffect(() => {
+    const generateSnowflakes = () => {
+      const flakes = [];
+      for (let i = 0; i < 50; i++) {
+        flakes.push({
+          id: i,
+          left: `${Math.random() * 100}%`,
+          animationDuration: `${Math.random() * 3 + 2}s`,
+          opacity: Math.random(),
+          size: Math.random() * 4 + 2
+        });
+      }
+      setSnowflakes(flakes);
+    };
+
+    generateSnowflakes();
+    const interval = setInterval(generateSnowflakes, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none">
+      {snowflakes.map((flake) => (
+        <div
+          key={flake.id}
+          className="absolute bg-white rounded-full"
+          style={{
+            left: flake.left,
+            width: `${flake.size}px`,
+            height: `${flake.size}px`,
+            opacity: flake.opacity,
+            animation: `fall ${flake.animationDuration} linear infinite`
+          }}
+        />
+      ))}
+      <style jsx>{`
+        @keyframes fall {
+          0% { transform: translateY(-10px); }
+          100% { transform: translateY(100vh); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// Christmas Card Component
+const ChristmasCard = ({ name, wishes, location }) => {
+  return (
+    <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
+      <div className="border-4 border-red-600 p-4 rounded-lg">
+        <h2 className="text-2xl font-festive text-red-600 text-center mb-4">
+          My Letter to Santa
+        </h2>
+        
+        <div className="space-y-4">
+          <div>
+            <p className="font-festive text-lg">Dear Santa,</p>
+            <p className="font-festive text-lg">My name is {name || '_______'}</p>
+          </div>
+
+          <div>
+            <p className="font-festive text-lg">This Christmas, I wish for:</p>
+            <ul className="list-disc pl-6 font-festive">
+              {wishes?.map((wish, index) => (
+                <li key={index} className="text-lg">{wish}</li>
+              )) || <li className="text-lg">_______</li>}
+            </ul>
+          </div>
+
+          {location && (
+            <p className="font-festive text-lg">
+              I'll be celebrating in {location}!
+            </p>
+          )}
+
+          <p className="font-festive text-lg text-right mt-4">
+            Thank you, Santa!
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Countdown Timer Component
+const CountdownTimer = ({ targetDate }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return (
+    <div className="flex justify-center space-x-4 text-white">
+      {Object.entries(timeLeft).map(([key, value]) => (
+        <div key={key} className="text-center">
+          <div className="bg-red-600 rounded-lg p-3 w-20">
+            <span className="text-2xl font-bold">{value}</span>
+          </div>
+          <div className="text-sm mt-1 capitalize">{key}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Voice Chat Interface
+const VoiceChat = ({ isListening, onToggle }) => {
+  return (
+    <div className="fixed bottom-4 right-4">
+      <button
+        onClick={onToggle}
+        className={`rounded-full w-16 h-16 flex items-center justify-center ${
+          isListening ? 'bg-red-600 animate-pulse' : 'bg-green-600'
+        }`}
+      >
+        <svg
+          className="w-8 h-8 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+};
 
 const Index = () => {
   const { toast } = useToast();
   const [name, setName] = useState("");
-  const [wishlistItem, setWishlistItem] = useState("");
   const [wishlist, setWishlist] = useState<Array<{ key: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [location, setLocation] = useState<string>("");
-  const conversation = useConversation();
+  const christmasDate = new Date('2025-12-25');
 
   const handleMessage = useCallback((message: any) => {
     console.log("Received message:", message);
     
-    // Check if the message contains a wish
     if (message.content && message.role === "user") {
-      // Simple wish detection - look for phrases like "I want" or "I wish"
+      // Wish detection
       const wishPhrases = ["i want", "i wish", "i would like", "can i have"];
       const contentLower = message.content.toLowerCase();
       
@@ -27,10 +185,8 @@ const Index = () => {
         if (contentLower.includes(phrase)) {
           const startIndex = contentLower.indexOf(phrase) + phrase.length;
           let wish = message.content.slice(startIndex).trim();
-          // Remove common filler words
           wish = wish.replace(/^(a |an |the |to |for )/i, "").trim();
           
-          // Add to wishlist if it's not already there
           const itemKey = Date.now().toString();
           setWishlist(prev => {
             if (!prev.some(item => item.name.toLowerCase() === wish.toLowerCase())) {
@@ -41,35 +197,20 @@ const Index = () => {
           break;
         }
       }
-    }
 
-    // Check if the message contains a location
-    if (message.content && message.role === "user" && 
-        (message.content.toLowerCase().includes("going to") || 
-         message.content.toLowerCase().includes("visit"))) {
-      const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
-      if (locationMatches && locationMatches[1]) {
-        setLocation(locationMatches[1].trim());
+      // Location detection
+      if (contentLower.includes("going to") || contentLower.includes("visit")) {
+        const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
+        if (locationMatches && locationMatches[1]) {
+          setLocation(locationMatches[1].trim());
+        }
       }
     }
   }, []);
 
-  useEffect(() => {
-    const requestMicrophoneAccess = async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (error) {
-        console.error('Error accessing microphone:', error);
-        toast({
-          title: "Microphone Access Required",
-          description: "Please allow microphone access to chat with Santa.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    requestMicrophoneAccess();
-  }, []);
+  const conversation = useConversation({
+    onMessage: handleMessage
+  });
 
   const handleStartConversation = async () => {
     if (!name.trim()) return;
@@ -103,7 +244,6 @@ const Index = () => {
 
       await supabase.rpc('triggername', { name: name.trim() });
       
-      // Start ElevenLabs conversation
       await conversation.startSession({
         agentId: credentials.agent_id,
       });
@@ -138,87 +278,74 @@ const Index = () => {
     }
   };
 
-  const handleRemoveFromWishlist = async (itemKey: string) => {
-    try {
-      setIsLoading(true);
-      setWishlist(wishlist.filter(item => item.key !== itemKey));
-    } catch (error) {
-      console.error('Error removing wishlist item:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-100 to-green-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="flex justify-center gap-4 mb-6">
-            <TreePine className="text-green-600 w-8 h-8" />
-            <Snowflake className="text-blue-400 w-8 h-8 animate-spin-slow" />
-            <Gift className="text-red-600 w-8 h-8" />
-          </div>
-          <h1 className="text-4xl font-bold text-green-800 mb-4">Santa's Interactive Wishlist</h1>
-          <p className="text-xl text-gray-600">Share your Christmas wishes with Santa!</p>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Snowfall />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-festive mb-4">Days Until Christmas</h1>
+          <CountdownTimer targetDate={christmasDate} />
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-6 mb-8">
-          <div className="mb-6">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              What's your name?
-            </label>
-            <div className="flex gap-4">
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                placeholder="Enter your name"
-                disabled={isSpeaking}
-              />
-              {!isSpeaking ? (
-                <button
-                  onClick={handleStartConversation}
-                  disabled={isLoading || !name.trim()}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Talk to Santa
-                </button>
-              ) : (
-                <button
-                  onClick={handleEndConversation}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <VolumeX className="w-4 h-4" />
-                  End Chat
-                </button>
-              )}
+        <div className="space-y-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <div className="mb-6">
+              <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
+                What's your name?
+              </label>
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
+                  placeholder="Enter your name"
+                  disabled={isSpeaking}
+                />
+                {!isSpeaking ? (
+                  <button
+                    onClick={handleStartConversation}
+                    disabled={isLoading || !name.trim()}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Talk to Santa
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleEndConversation}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <VolumeX className="w-4 h-4" />
+                    End Chat
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800">Your Wishlist:</h3>
-            {wishlist.map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between bg-white rounded-lg p-4 shadow animate-fade-in"
-              >
-                <span className="text-gray-700">{item.name}</span>
-                <button
-                  onClick={() => handleRemoveFromWishlist(item.key)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            {wishlist.length === 0 && (
-              <p className="text-gray-500 text-center italic">Your wishlist is empty</p>
-            )}
-          </div>
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex justify-center"
+            >
+              <ChristmasCard
+                name={name}
+                wishes={wishlist.map(item => item.name)}
+                location={location}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
+
+        <VoiceChat
+          isListening={isSpeaking}
+          onToggle={isSpeaking ? handleEndConversation : handleStartConversation}
+        />
       </div>
     </div>
   );
