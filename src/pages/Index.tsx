@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
@@ -10,69 +11,131 @@ import Snowfall from "@/components/Snowfall";
 import ChristmasCard from "@/components/ChristmasCard";
 import CountdownTimer from "@/components/CountdownTimer";
 import VoiceChat from "@/components/VoiceChat";
-import { MessageHandler, type Message } from '../services/messageHandler';
 
 const Index: React.FC = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [cardData, setCardData] = useState<CardData>({
     name: '',
     wishes: [],
     location: ''
   });
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const christmasDate = new Date(new Date().getFullYear(), 11, 25); // December 25th
+  
+  const christmasDate = new Date('2025-12-25');
 
-  const {
-    start: startConversation,
-    end: endConversation,
-    messages,
-    isLoading: isElevenLabsLoading,
-    error,
-  } = useConversation();
+  const conversation = useConversation({
+    onMessage: async (message: any) => {
+      console.log("Received message:", message);
+      await captureEvent('message_received', { 
+        message_type: message?.type,
+        has_content: !!message?.content
+      });
+      await fetchWishlist();
+    }
+  });
 
-  useEffect(() => {
-    if (error) {
-      console.error("ElevenLabs error:", error);
-      toast({
-        title: "Voice Error",
-        description: "Failed to initialize voice. Please check your connection.",
-        variant: "destructive",
+  const isWishlist = (data: any): data is Wishlist => {
+    return (
+      data &&
+      typeof data === 'object' &&
+      'items' in data &&
+      Array.isArray(data.items) &&
+      'priority_order' in data &&
+      Array.isArray(data.priority_order) &&
+      'notes' in data &&
+      typeof data.notes === 'string'
+    );
+  };
+
+  const fetchWishlist = async () => {
+    try {
+      console.log('Fetching wishlist...');
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          wishlist,
+          name,
+          location,
+          voice_interactions (
+            transcription,
+            response_text
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching wishlist:', error);
+        await captureEvent('wishlist_fetch_error', { error: error.message });
+        toast({
+          title: "Error",
+          description: "Could not fetch your wishlist. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        console.log('Fetched conversation data:', data);
+        
+        // Extract wishes from the wishlist structure
+        let wishes: string[] = [];
+        
+        if (data.wishlist && isWishlist(data.wishlist)) {
+          wishes = data.wishlist.items.map(item => item.name);
+          console.log('Extracted wishes:', wishes);
+        } else {
+          console.log('Invalid wishlist format:', data.wishlist);
+        }
+
+        const newCardData = {
+          name: data.name || '',
+          wishes: wishes,
+          location: data.location || ''
+        };
+        
+        console.log('Setting card data:', newCardData);
+        
+        setCardData(newCardData);
+        await captureEvent('wishlist_updated', { 
+          has_name: !!newCardData.name,
+          wishes_count: newCardData.wishes.length,
+          has_location: !!newCardData.location
+        });
+
+        if (newCardData.wishes.length > 0 || newCardData.name || newCardData.location) {
+          toast({
+            title: "Letter Updated",
+            description: "Your letter to Santa has been updated!",
+          });
+        }
+      } else {
+        console.log('No conversation data found');
+      }
+    } catch (error) {
+      console.error('Error in fetchWishlist:', error);
+      await captureEvent('wishlist_fetch_error', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
-  }, [error, toast]);
-
-  const handleMessage = useCallback((text: string) => {
-    if (text.trim() === '') return;
-
-    const message: Message = {
-      source: 'user',
-      message: text,
-    };
-
-    const updates = MessageHandler.processMessage(message);
-    if (updates) {
-      setCardData(prev => ({
-        ...prev,
-        ...updates,
-        wishes: updates.wishes ? [...new Set([...prev.wishes, ...updates.wishes])] : prev.wishes
-      }));
-    }
-  }, []);
+  };
 
   useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'user') {
-        handleMessage(lastMessage.content);
-      }
+    // Initial fetch when component mounts
+    fetchWishlist();
+    
+    if (isSpeaking) {
+      const interval = setInterval(fetchWishlist, 2000);
+      return () => clearInterval(interval);
     }
-  }, [messages, handleMessage]);
+  }, [isSpeaking]);
 
   const handleStartConversation = async () => {
     try {
       setIsLoading(true);
-      await captureEvent('letter_start_attempt');
+      await captureEvent('conversation_start_attempt');
 
       const { data: credentials, error } = await supabase
         .from('elevenlabs_credentials')
@@ -82,7 +145,7 @@ const Index: React.FC = () => {
 
       if (error) {
         console.error('Database error:', error);
-        await captureEvent('letter_start_error', { error: error.message });
+        await captureEvent('conversation_start_error', { error: error.message });
         toast({
           title: "Error",
           description: "Could not connect to Santa's system. Please try again.",
@@ -92,7 +155,7 @@ const Index: React.FC = () => {
       }
 
       if (!credentials?.agent_id) {
-        await captureEvent('letter_start_config_error', { error: 'Missing agent ID' });
+        await captureEvent('conversation_config_error', { error: 'Missing agent ID' });
         toast({
           title: "Configuration Error",
           description: "Santa's communication system is not properly configured.",
@@ -101,23 +164,23 @@ const Index: React.FC = () => {
         return;
       }
 
-      await startConversation({
+      await conversation.startSession({
         agentId: credentials.agent_id,
       });
 
       setIsSpeaking(true);
-      await captureEvent('letter_started_successfully');
+      await captureEvent('conversation_started_successfully');
       toast({
-        title: "Connected to Santa!",
-        description: "You can now tell Santa your wishes.",
+        title: "Connected with Santa!",
+        description: "You can now talk with Santa about your wishlist.",
       });
     } catch (error) {
       console.error('Error starting conversation:', error);
-      await captureEvent('letter_start_error', { 
+      await captureEvent('conversation_start_error', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
       toast({
-        title: "Error",
+        title: "Connection Error",
         description: "Could not connect to Santa. Please try again.",
         variant: "destructive",
       });
@@ -128,26 +191,18 @@ const Index: React.FC = () => {
 
   const handleEndConversation = async () => {
     try {
-      setIsLoading(true);
-      await endConversation();
+      await conversation.endSession();
       setIsSpeaking(false);
-      await captureEvent('letter_ended_successfully');
+      await captureEvent('conversation_ended_successfully');
       toast({
-        title: "Disconnected",
-        description: "You've ended your chat with Santa.",
+        title: "Conversation Ended",
+        description: "Santa will be waiting for your next visit!",
       });
     } catch (error) {
       console.error('Error ending conversation:', error);
-      await captureEvent('letter_end_error', { 
+      await captureEvent('conversation_end_error', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
-      toast({
-        title: "Error",
-        description: "Could not end the chat. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -214,16 +269,6 @@ const Index: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSave = () => {
-    // Implement save functionality
-    console.log('Saving card:', cardData);
-  };
-
-  const handleVideoSave = () => {
-    // Implement video save functionality
-    console.log('Saving card with video:', cardData);
   };
 
   return (
