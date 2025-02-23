@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
@@ -7,10 +6,29 @@ import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
 import posthog from 'posthog-js';
 
+const POSTHOG_API_KEY = 'phc_J9d4iidYwSLUR1LAwZ1pQ1IZVf699Hswj6rud7nB0EL';
+
 // Initialize PostHog
-posthog.init('phc_J9d4iidYwSLUR1LAwZ1pQ1IZVf699Hswj6rud7nB0EL', { 
+posthog.init(POSTHOG_API_KEY, { 
   api_host: 'https://app.posthog.com'
 });
+
+// Custom analytics function to capture events in both PostHog and Supabase
+const captureEvent = async (eventName: string, properties: Record<string, any> = {}) => {
+  try {
+    // Capture in PostHog
+    posthog.capture(eventName, properties);
+    
+    // Capture in Supabase
+    await supabase.rpc('captureposthogevent', {
+      api_key: POSTHOG_API_KEY,
+      event: eventName,
+      properties
+    });
+  } catch (error) {
+    console.error('Error capturing event:', error);
+  }
+};
 
 // Types for our messages and data
 interface Message {
@@ -223,7 +241,7 @@ const Index: React.FC = () => {
 
       if (error) {
         console.error('Error fetching wishlist:', error);
-        posthog.capture('wishlist_fetch_error', { error: error.message });
+        await captureEvent('wishlist_fetch_error', { error: error.message });
         return;
       }
 
@@ -236,7 +254,7 @@ const Index: React.FC = () => {
         };
         
         setCardData(newCardData);
-        posthog.capture('wishlist_updated', { 
+        await captureEvent('wishlist_updated', { 
           has_name: !!newCardData.name,
           wishes_count: newCardData.wishes.length,
           has_location: !!newCardData.location
@@ -244,7 +262,7 @@ const Index: React.FC = () => {
       }
     } catch (error) {
       console.error('Error in fetchWishlist:', error);
-      posthog.capture('wishlist_fetch_error', { 
+      await captureEvent('wishlist_fetch_error', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
@@ -252,7 +270,7 @@ const Index: React.FC = () => {
 
   const handleMessage = useCallback(async (message: any) => {
     console.log("Received message:", message);
-    posthog.capture('message_received', { 
+    await captureEvent('message_received', { 
       message_type: message?.type,
       has_content: !!message?.content
     });
@@ -276,7 +294,7 @@ const Index: React.FC = () => {
   const handleStartConversation = async () => {
     try {
       setIsLoading(true);
-      posthog.capture('conversation_start_attempt');
+      await captureEvent('conversation_start_attempt');
 
       const { data: credentials, error } = await supabase
         .from('elevenlabs_credentials')
@@ -286,7 +304,7 @@ const Index: React.FC = () => {
 
       if (error) {
         console.error('Database error:', error);
-        posthog.capture('conversation_start_error', { error: error.message });
+        await captureEvent('conversation_start_error', { error: error.message });
         toast({
           title: "Error",
           description: "Could not connect to Santa's system. Please try again.",
@@ -296,7 +314,7 @@ const Index: React.FC = () => {
       }
 
       if (!credentials?.agent_id) {
-        posthog.capture('conversation_config_error', { error: 'Missing agent ID' });
+        await captureEvent('conversation_config_error', { error: 'Missing agent ID' });
         toast({
           title: "Configuration Error",
           description: "Santa's communication system is not properly configured.",
@@ -310,14 +328,14 @@ const Index: React.FC = () => {
       });
 
       setIsSpeaking(true);
-      posthog.capture('conversation_started_successfully');
+      await captureEvent('conversation_started_successfully');
       toast({
         title: "Connected with Santa!",
         description: "You can now talk with Santa about your wishlist.",
       });
     } catch (error) {
       console.error('Error starting conversation:', error);
-      posthog.capture('conversation_start_error', { 
+      await captureEvent('conversation_start_error', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
       toast({
@@ -334,14 +352,14 @@ const Index: React.FC = () => {
     try {
       await conversation.endSession();
       setIsSpeaking(false);
-      posthog.capture('conversation_ended_successfully');
+      await captureEvent('conversation_ended_successfully');
       toast({
         title: "Conversation Ended",
         description: "Santa will be waiting for your next visit!",
       });
     } catch (error) {
       console.error('Error ending conversation:', error);
-      posthog.capture('conversation_end_error', { 
+      await captureEvent('conversation_end_error', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
