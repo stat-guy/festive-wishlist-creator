@@ -1,25 +1,90 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Gift, TreePine } from "lucide-react";
+import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useConversation } from "@11labs/react";
 
 const Index = () => {
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [wishlistItem, setWishlistItem] = useState("");
   const [wishlist, setWishlist] = useState<Array<{ key: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const conversation = useConversation();
+
+  useEffect(() => {
+    const requestMicrophoneAccess = async () => {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access to chat with Santa.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    requestMicrophoneAccess();
+  }, []);
 
   const handleStartConversation = async () => {
     if (!name.trim()) return;
     
     try {
       setIsLoading(true);
+      const { data: credentials } = await supabase
+        .from('elevenlabs_credentials')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!credentials?.agent_id) {
+        toast({
+          title: "Configuration Error",
+          description: "Santa's communication system is not properly configured.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await supabase.rpc('triggername', { name: name.trim() });
-      // Additional ElevenLabs integration will go here
+      
+      // Start ElevenLabs conversation
+      await conversation.startSession({
+        agentId: credentials.agent_id,
+      });
+
+      setIsSpeaking(true);
+      toast({
+        title: "Connected with Santa!",
+        description: "You can now talk with Santa about your wishlist.",
+      });
     } catch (error) {
       console.error('Error starting conversation:', error);
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to Santa. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleEndConversation = async () => {
+    try {
+      await conversation.endSession();
+      setIsSpeaking(false);
+      toast({
+        title: "Conversation Ended",
+        description: "Santa will be waiting for your next visit!",
+      });
+    } catch (error) {
+      console.error('Error ending conversation:', error);
     }
   };
 
@@ -81,14 +146,26 @@ const Index = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                 placeholder="Enter your name"
+                disabled={isSpeaking}
               />
-              <button
-                onClick={handleStartConversation}
-                disabled={isLoading || !name.trim()}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-              >
-                Start Chat
-              </button>
+              {!isSpeaking ? (
+                <button
+                  onClick={handleStartConversation}
+                  disabled={isLoading || !name.trim()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Talk to Santa
+                </button>
+              ) : (
+                <button
+                  onClick={handleEndConversation}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <VolumeX className="w-4 h-4" />
+                  End Chat
+                </button>
+              )}
             </div>
           </div>
 
