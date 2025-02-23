@@ -12,7 +12,58 @@ const Index = () => {
   const [wishlist, setWishlist] = useState<Array<{ key: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [location, setLocation] = useState<string>("");
   const conversation = useConversation();
+
+  // Listen to conversation messages to extract wishes
+  useEffect(() => {
+    if (!conversation) return;
+
+    const handleMessage = (message: any) => {
+      console.log("Received message:", message);
+      
+      // Check if the message contains a wish
+      if (message.content && message.role === "user") {
+        // Simple wish detection - look for phrases like "I want" or "I wish"
+        const wishPhrases = ["i want", "i wish", "i would like", "can i have"];
+        const contentLower = message.content.toLowerCase();
+        
+        for (const phrase of wishPhrases) {
+          if (contentLower.includes(phrase)) {
+            const startIndex = contentLower.indexOf(phrase) + phrase.length;
+            let wish = message.content.slice(startIndex).trim();
+            // Remove common filler words
+            wish = wish.replace(/^(a |an |the |to |for )/i, "").trim();
+            
+            // Add to wishlist if it's not already there
+            const itemKey = Date.now().toString();
+            setWishlist(prev => {
+              if (!prev.some(item => item.name.toLowerCase() === wish.toLowerCase())) {
+                return [...prev, { key: itemKey, name: wish }];
+              }
+              return prev;
+            });
+            break;
+          }
+        }
+      }
+
+      // Check if the message contains a location
+      if (message.content && message.role === "user" && 
+          (message.content.toLowerCase().includes("going to") || 
+           message.content.toLowerCase().includes("visit"))) {
+        const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
+        if (locationMatches && locationMatches[1]) {
+          setLocation(locationMatches[1].trim());
+        }
+      }
+    };
+
+    conversation.on("message", handleMessage);
+    return () => {
+      conversation.off("message", handleMessage);
+    };
+  }, [conversation]);
 
   useEffect(() => {
     const requestMicrophoneAccess = async () => {
@@ -98,30 +149,9 @@ const Index = () => {
     }
   };
 
-  const handleAddToWishlist = async () => {
-    if (!wishlistItem.trim()) return;
-    
-    try {
-      setIsLoading(true);
-      const itemKey = Date.now().toString();
-      await supabase.rpc('triggeradditemtowishlist', {
-        itemkey: itemKey,
-        itemname: wishlistItem.trim()
-      });
-      
-      setWishlist([...wishlist, { key: itemKey, name: wishlistItem }]);
-      setWishlistItem("");
-    } catch (error) {
-      console.error('Error adding wishlist item:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleRemoveFromWishlist = async (itemKey: string) => {
     try {
       setIsLoading(true);
-      await supabase.rpc('triggerremoveitemfromwishlist', { itemkey: itemKey });
       setWishlist(wishlist.filter(item => item.key !== itemKey));
     } catch (error) {
       console.error('Error removing wishlist item:', error);
@@ -179,35 +209,12 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="wishlist" className="block text-sm font-medium text-gray-700 mb-2">
-              Add to your wishlist
-            </label>
-            <div className="flex gap-4">
-              <input
-                type="text"
-                id="wishlist"
-                value={wishlistItem}
-                onChange={(e) => setWishlistItem(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                placeholder="Enter a wish"
-              />
-              <button
-                onClick={handleAddToWishlist}
-                disabled={isLoading || !wishlistItem.trim()}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                Add Wish
-              </button>
-            </div>
-          </div>
-
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800">Your Wishlist:</h3>
             {wishlist.map((item) => (
               <div
                 key={item.key}
-                className="flex items-center justify-between bg-white rounded-lg p-4 shadow"
+                className="flex items-center justify-between bg-white rounded-lg p-4 shadow animate-fade-in"
               >
                 <span className="text-gray-700">{item.name}</span>
                 <button
