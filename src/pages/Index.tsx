@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
@@ -65,9 +64,9 @@ const Snowfall = () => {
 
 // Christmas Card Component
 const ChristmasCard = ({ name, wishes, location }: { 
-  name: string; 
-  wishes: string[]; 
-  location: string; 
+  name?: string; 
+  wishes?: Array<{ key: string; name: string; priority?: number }>;
+  location?: string; 
 }) => {
   return (
     <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
@@ -85,9 +84,13 @@ const ChristmasCard = ({ name, wishes, location }: {
           <div>
             <p className="font-festive text-lg">This Christmas, I wish for:</p>
             <ul className="list-disc pl-6 font-festive">
-              {wishes?.map((wish, index) => (
-                <li key={index} className="text-lg">{wish}</li>
-              )) || <li className="text-lg">_______</li>}
+              {wishes && wishes.length > 0 ? (
+                wishes.map((wish) => (
+                  <li key={wish.key} className="text-lg">{wish.name}</li>
+                ))
+              ) : (
+                <li className="text-lg">_______</li>
+              )}
             </ul>
           </div>
 
@@ -182,55 +185,69 @@ const VoiceChat = ({ isListening, onToggle }: {
 
 const Index = () => {
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [wishlist, setWishlist] = useState<Array<{ key: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [location, setLocation] = useState<string>("");
+  const [cardData, setCardData] = useState<{
+    name?: string;
+    wishes?: Array<{ key: string; name: string; priority?: number }>;
+    location?: string;
+  }>({});
   const christmasDate = new Date('2025-12-25');
 
   const handleMessage = useCallback((message: any) => {
     console.log("Received message:", message);
     
-    if (message.content && message.role === "user") {
-      // Wish detection
-      const wishPhrases = ["i want", "i wish", "i would like", "can i have"];
-      const contentLower = message.content.toLowerCase();
-      
-      for (const phrase of wishPhrases) {
-        if (contentLower.includes(phrase)) {
-          const startIndex = contentLower.indexOf(phrase) + phrase.length;
-          let wish = message.content.slice(startIndex).trim();
-          wish = wish.replace(/^(a |an |the |to |for )/i, "").trim();
-          
-          const itemKey = Date.now().toString();
-          setWishlist(prev => {
-            if (!prev.some(item => item.name.toLowerCase() === wish.toLowerCase())) {
-              return [...prev, { key: itemKey, name: wish }];
-            }
-            return prev;
-          });
-          break;
+    if (message.content && message.role === "assistant") {
+      // Extract name from assistant's greeting
+      if (message.content.includes("Nice to meet you")) {
+        const nameMatch = message.content.match(/Nice to meet you,\s+([^!.,]+)/i);
+        if (nameMatch && nameMatch[1]) {
+          setCardData(prev => ({ ...prev, name: nameMatch[1].trim() }));
         }
       }
+    }
 
+    if (message.content && message.role === "user") {
       // Location detection
-      if (contentLower.includes("going to") || contentLower.includes("visit")) {
+      if (message.content.toLowerCase().includes("going to") || 
+          message.content.toLowerCase().includes("visit")) {
         const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
         if (locationMatches && locationMatches[1]) {
-          setLocation(locationMatches[1].trim());
+          setCardData(prev => ({ ...prev, location: locationMatches[1].trim() }));
         }
       }
     }
   }, []);
+
+  const fetchWishlist = async () => {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('wishlist, name, location')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (data && !error) {
+      setCardData({
+        name: data.name || undefined,
+        wishes: data.wishlist?.items || [],
+        location: data.location || undefined
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isSpeaking) {
+      const interval = setInterval(fetchWishlist, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [isSpeaking]);
 
   const conversation = useConversation({
     onMessage: handleMessage
   });
 
   const handleStartConversation = async () => {
-    if (!name.trim()) return;
-    
     try {
       setIsLoading(true);
       const { data: credentials, error } = await supabase
@@ -258,8 +275,6 @@ const Index = () => {
         return;
       }
 
-      await supabase.rpc('triggername', { name: name.trim() });
-      
       await conversation.startSession({
         agentId: credentials.agent_id,
       });
@@ -305,41 +320,25 @@ const Index = () => {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-            <div className="mb-6">
-              <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
-                What's your name?
-              </label>
-              <div className="flex gap-4">
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-gray-900"
-                  placeholder="Enter your name"
-                  disabled={isSpeaking}
-                />
-                {!isSpeaking ? (
-                  <button
-                    onClick={handleStartConversation}
-                    disabled={isLoading || !name.trim()}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    Talk to Santa
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleEndConversation}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center gap-2"
-                  >
-                    <VolumeX className="w-4 h-4" />
-                    End Chat
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="flex justify-center">
+            {!isSpeaking ? (
+              <button
+                onClick={handleStartConversation}
+                disabled={isLoading}
+                className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 text-lg font-medium shadow-lg transform hover:scale-105 transition-all"
+              >
+                <Volume2 className="w-6 h-6" />
+                Talk to Santa
+              </button>
+            ) : (
+              <button
+                onClick={handleEndConversation}
+                className="px-6 py-3 bg-gray-600 text-white rounded-full hover:bg-gray-700 flex items-center gap-2 text-lg font-medium shadow-lg"
+              >
+                <VolumeX className="w-6 h-6" />
+                End Chat
+              </button>
+            )}
           </div>
 
           <AnimatePresence>
@@ -349,11 +348,7 @@ const Index = () => {
               exit={{ opacity: 0, y: -20 }}
               className="flex justify-center"
             >
-              <ChristmasCard
-                name={name}
-                wishes={wishlist.map(item => item.name)}
-                location={location}
-              />
+              <ChristmasCard {...cardData} />
             </motion.div>
           </AnimatePresence>
         </div>
