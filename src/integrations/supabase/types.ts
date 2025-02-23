@@ -30,6 +30,27 @@ export type Database = {
         }
         Relationships: []
       }
+      elevenlabs_credentials: {
+        Row: {
+          agent_id: string
+          api_key: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          agent_id: string
+          api_key: string
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          agent_id?: string
+          api_key?: string
+          created_at?: string
+          id?: never
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
