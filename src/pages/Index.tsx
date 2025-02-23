@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
@@ -38,6 +39,7 @@ const Index: React.FC = () => {
 
   const fetchWishlist = async () => {
     try {
+      console.log('Fetching wishlist...');
       const { data, error } = await supabase
         .from('conversations')
         .select(`
@@ -56,6 +58,11 @@ const Index: React.FC = () => {
       if (error) {
         console.error('Error fetching wishlist:', error);
         await captureEvent('wishlist_fetch_error', { error: error.message });
+        toast({
+          title: "Error",
+          description: "Could not fetch your wishlist. Please try again.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -67,6 +74,9 @@ const Index: React.FC = () => {
         
         if (data.wishlist && isWishlist(data.wishlist)) {
           wishes = data.wishlist.items.map(item => item.name);
+          console.log('Extracted wishes:', wishes);
+        } else {
+          console.log('Invalid wishlist format:', data.wishlist);
         }
 
         const newCardData = {
@@ -83,6 +93,15 @@ const Index: React.FC = () => {
           wishes_count: newCardData.wishes.length,
           has_location: !!newCardData.location
         });
+
+        if (newCardData.wishes.length > 0 || newCardData.name || newCardData.location) {
+          toast({
+            title: "Letter Updated",
+            description: "Your letter to Santa has been updated!",
+          });
+        }
+      } else {
+        console.log('No conversation data found');
       }
     } catch (error) {
       console.error('Error in fetchWishlist:', error);
