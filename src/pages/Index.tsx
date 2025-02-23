@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
@@ -8,8 +9,7 @@ import posthog from 'posthog-js';
 
 // Initialize PostHog
 posthog.init('phc_J9d4iidYwSLUR1LAwZ1pQ1IZVf699Hswj6rud7nB0EL', { 
-  api_host: 'https://app.posthog.com',
-  project_id: '130961'
+  api_host: 'https://app.posthog.com'
 });
 
 // Types for our messages and data
