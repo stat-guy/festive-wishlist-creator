@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,11 +36,21 @@ const Index = () => {
     
     try {
       setIsLoading(true);
-      const { data: credentials } = await supabase
+      const { data: credentials, error } = await supabase
         .from('elevenlabs_credentials')
-        .select('*')
+        .select('agent_id')
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error:', error);
+        toast({
+          title: "Error",
+          description: "Could not connect to Santa's system. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (!credentials?.agent_id) {
         toast({
