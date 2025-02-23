@@ -23,6 +23,19 @@ const Index: React.FC = () => {
   
   const christmasDate = new Date('2025-12-25');
 
+  const isWishlist = (data: any): data is Wishlist => {
+    return (
+      data &&
+      typeof data === 'object' &&
+      'items' in data &&
+      Array.isArray(data.items) &&
+      'priority_order' in data &&
+      Array.isArray(data.priority_order) &&
+      'notes' in data &&
+      typeof data.notes === 'string'
+    );
+  };
+
   const fetchWishlist = async () => {
     try {
       const { data, error } = await supabase
@@ -51,10 +64,9 @@ const Index: React.FC = () => {
         
         // Extract wishes from the wishlist structure
         let wishes: string[] = [];
-        const wishlist = data.wishlist as Wishlist;
         
-        if (wishlist && wishlist.items && Array.isArray(wishlist.items)) {
-          wishes = wishlist.items.map(item => item.name);
+        if (data.wishlist && isWishlist(data.wishlist)) {
+          wishes = data.wishlist.items.map(item => item.name);
         }
 
         const newCardData = {
