@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureEvent } from "@/utils/analytics";
-import { CardData } from "@/types/christmas";
+import { CardData, Wishlist } from "@/types/christmas";
 import Snowfall from "@/components/Snowfall";
 import ChristmasCard from "@/components/ChristmasCard";
 import CountdownTimer from "@/components/CountdownTimer";
@@ -47,16 +47,14 @@ const Index: React.FC = () => {
       }
 
       if (data) {
-        console.log('Fetched conversation data:', data); // Debug log
+        console.log('Fetched conversation data:', data);
         
         // Extract wishes from the wishlist structure
         let wishes: string[] = [];
-        if (data.wishlist && typeof data.wishlist === 'object') {
-          if (Array.isArray(data.wishlist.items)) {
-            wishes = data.wishlist.items.map((item: any) => item.name || item);
-          } else if (Array.isArray(data.wishlist)) {
-            wishes = data.wishlist.map((item: any) => item.name || item);
-          }
+        const wishlist = data.wishlist as Wishlist;
+        
+        if (wishlist && wishlist.items && Array.isArray(wishlist.items)) {
+          wishes = wishlist.items.map(item => item.name);
         }
 
         const newCardData = {
@@ -65,7 +63,7 @@ const Index: React.FC = () => {
           location: data.location || ''
         };
         
-        console.log('Setting card data:', newCardData); // Debug log
+        console.log('Setting card data:', newCardData);
         
         setCardData(newCardData);
         await captureEvent('wishlist_updated', { 
@@ -100,7 +98,7 @@ const Index: React.FC = () => {
       const interval = setInterval(fetchWishlist, 2000);
       return () => clearInterval(interval);
     }
-  }, [isSpeaking]); // Added initial fetch
+  }, [isSpeaking]);
 
   const conversation = useConversation({
     onMessage: handleMessage
