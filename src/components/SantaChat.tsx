@@ -1,22 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Types for our card data
+interface CardData {
+  name: string;
+  wishes: string[];
+  location: string;
+}
+
+// Types for our message handlers
+interface Message {
+  type: 'name' | 'wish' | 'location';
+  content: string;
+}
+
 // Snowfall Animation Component
-const Snowfall = () => {
-  const [snowflakes, setSnowflakes] = useState([]);
+const Snowfall: React.FC = () => {
+  const [snowflakes, setSnowflakes] = useState<Array<{
+    id: number;
+    left: string;
+    animationDuration: string;
+    opacity: number;
+    size: number;
+  }>>([]);
 
   useEffect(() => {
     const generateSnowflakes = () => {
-      const flakes = [];
-      for (let i = 0; i < 50; i++) {
-        flakes.push({
-          id: i,
-          left: `${Math.random() * 100}%`,
-          animationDuration: `${Math.random() * 3 + 2}s`,
-          opacity: Math.random(),
-          size: Math.random() * 4 + 2
-        });
-      }
+      const flakes = Array.from({ length: 50 }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        animationDuration: `${Math.random() * 3 + 2}s`,
+        opacity: Math.random(),
+        size: Math.random() * 4 + 2
+      }));
       setSnowflakes(flakes);
     };
 
@@ -40,18 +56,20 @@ const Snowfall = () => {
           }}
         />
       ))}
-      <style jsx>{`
-        @keyframes fall {
-          0% { transform: translateY(-10px); }
-          100% { transform: translateY(100vh); }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes fall {
+            0% { transform: translateY(-10px); }
+            100% { transform: translateY(100vh); }
+          }
+        `
+      }} />
     </div>
   );
 };
 
 // Christmas Card Component
-const ChristmasCard = ({ name, wishes, location }) => {
+const ChristmasCard: React.FC<CardData> = ({ name, wishes, location }) => {
   return (
     <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
       <div className="border-4 border-red-600 p-4 rounded-lg">
@@ -68,9 +86,13 @@ const ChristmasCard = ({ name, wishes, location }) => {
           <div>
             <p className="font-festive text-lg">This Christmas, I wish for:</p>
             <ul className="list-disc pl-6 font-festive">
-              {wishes?.map((wish, index) => (
-                <li key={index} className="text-lg">{wish}</li>
-              )) || <li className="text-lg">_______</li>}
+              {wishes && wishes.length > 0 ? (
+                wishes.map((wish, index) => (
+                  <li key={index} className="text-lg">{wish}</li>
+                ))
+              ) : (
+                <li className="text-lg">_______</li>
+              )}
             </ul>
           </div>
 
@@ -90,7 +112,7 @@ const ChristmasCard = ({ name, wishes, location }) => {
 };
 
 // Countdown Timer Component
-const CountdownTimer = ({ targetDate }) => {
+const CountdownTimer: React.FC<{ targetDate: Date }> = ({ targetDate }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -100,7 +122,7 @@ const CountdownTimer = ({ targetDate }) => {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date();
+      const difference = +targetDate - +new Date();
       
       if (difference > 0) {
         setTimeLeft({
@@ -114,7 +136,6 @@ const CountdownTimer = ({ targetDate }) => {
 
     calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(timer);
   }, [targetDate]);
 
@@ -133,9 +154,12 @@ const CountdownTimer = ({ targetDate }) => {
 };
 
 // Age Verification Modal
-const AgeVerification = ({ onVerify, onCancel }) => {
+const AgeVerification: React.FC<{
+  onVerify: () => void;
+  onCancel: () => void;
+}> = ({ onVerify, onCancel }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
         <h3 className="text-xl font-semibold mb-4">Age Verification</h3>
         <p className="mb-6">Please confirm that you are 18 years or older to continue.</p>
@@ -159,7 +183,10 @@ const AgeVerification = ({ onVerify, onCancel }) => {
 };
 
 // Voice Chat Interface
-const VoiceChat = ({ isListening, onToggle }) => {
+const VoiceChat: React.FC<{
+  isListening: boolean;
+  onToggle: () => void;
+}> = ({ isListening, onToggle }) => {
   return (
     <div className="fixed bottom-4 right-4">
       <button
@@ -187,19 +214,32 @@ const VoiceChat = ({ isListening, onToggle }) => {
 };
 
 // Main Santa Chat Container
-const SantaChat = () => {
+interface SantaChatProps {
+  cardData: CardData;
+  onUpdateCard: (message: Message) => void;
+}
+
+const SantaChat: React.FC<SantaChatProps> = ({ cardData, onUpdateCard }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [cardData, setCardData] = useState({
-    name: '',
-    wishes: [],
-    location: ''
-  });
-
   const christmasDate = new Date('2025-12-25');
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="relative min-h-screen bg-gray-900 text-white overflow-hidden">
+      {/* Background Video */}
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+      >
+        <source src="/assets/output.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Overlay for better text visibility */}
+      <div className="absolute inset-0 bg-black bg-opacity-50" />
+      
       <Snowfall />
       
       {!isVerified && (
@@ -209,7 +249,7 @@ const SantaChat = () => {
         />
       )}
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="relative container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-festive mb-4">Days Until Christmas</h1>
           <CountdownTimer targetDate={christmasDate} />
@@ -221,7 +261,10 @@ const SantaChat = () => {
 
         <VoiceChat
           isListening={isListening}
-          onToggle={() => setIsListening(!isListening)}
+          onToggle={() => {
+            setIsListening(!isListening);
+            // Handle voice chat toggle
+          }}
         />
       </div>
     </div>
