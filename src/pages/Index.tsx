@@ -1,214 +1,16 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
-import posthog from 'posthog-js';
-
-const POSTHOG_API_KEY = 'phc_J9d4iidYwSLUR1LAwZ1pQ1IZVf699Hswj6rud7nB0EL';
-
-// Initialize PostHog
-posthog.init(POSTHOG_API_KEY, { 
-  api_host: 'https://app.posthog.com'
-});
-
-// Custom analytics function to capture events in both PostHog and Supabase
-const captureEvent = async (eventName: string, properties: Record<string, any> = {}) => {
-  try {
-    // Capture in PostHog
-    posthog.capture(eventName, properties);
-    
-    // Capture in Supabase
-    await supabase.rpc('captureposthogevent', {
-      api_key: POSTHOG_API_KEY,
-      event: eventName,
-      properties
-    });
-  } catch (error) {
-    console.error('Error capturing event:', error);
-  }
-};
-
-// Types for our messages and data
-interface Message {
-  type: 'name' | 'wish' | 'location';
-  content: string;
-}
-
-interface CardData {
-  name: string;
-  wishes: string[];
-  location: string;
-}
-
-// Snowfall Animation Component
-const Snowfall: React.FC = () => {
-  const [snowflakes, setSnowflakes] = useState<Array<{
-    id: number;
-    left: string;
-    animationDuration: string;
-    opacity: number;
-    size: number;
-  }>>([]);
-
-  useEffect(() => {
-    const generateSnowflakes = () => {
-      const flakes = Array.from({ length: 50 }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        animationDuration: `${Math.random() * 3 + 2}s`,
-        opacity: Math.random(),
-        size: Math.random() * 4 + 2
-      }));
-      setSnowflakes(flakes);
-    };
-
-    generateSnowflakes();
-    const interval = setInterval(generateSnowflakes, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none">
-      {snowflakes.map((flake) => (
-        <div
-          key={flake.id}
-          className="absolute bg-white rounded-full"
-          style={{
-            left: flake.left,
-            width: `${flake.size}px`,
-            height: `${flake.size}px`,
-            opacity: flake.opacity,
-            animation: `fall ${flake.animationDuration} linear infinite`
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes fall {
-          0% { transform: translateY(-10px); }
-          100% { transform: translateY(100vh); }
-        }
-      `}</style>
-    </div>
-  );
-};
-
-// Christmas Card Component
-const ChristmasCard: React.FC<CardData> = ({ name, wishes, location }) => {
-  return (
-    <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
-      <div className="border-4 border-red-600 p-4 rounded-lg">
-        <h2 className="text-2xl font-festive text-red-600 text-center mb-4">
-          My Letter to Santa
-        </h2>
-        
-        <div className="space-y-4">
-          <div>
-            <p className="font-festive text-lg">Dear Santa,</p>
-            <p className="font-festive text-lg">My name is {name || '_______'}</p>
-          </div>
-
-          <div>
-            <p className="font-festive text-lg">This Christmas, I wish for:</p>
-            <ul className="list-disc pl-6 font-festive">
-              {wishes && wishes.length > 0 ? (
-                wishes.map((wish, index) => (
-                  <li key={index} className="text-lg">{wish}</li>
-                ))
-              ) : (
-                <li className="text-lg">_______</li>
-              )}
-            </ul>
-          </div>
-
-          {location && (
-            <p className="font-festive text-lg">
-              I'll be celebrating in {location}!
-            </p>
-          )}
-
-          <p className="font-festive text-lg text-right mt-4">
-            Thank you, Santa!
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Countdown Timer Component
-const CountdownTimer: React.FC<{ targetDate: Date }> = ({ targetDate }) => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = +targetDate - +new Date();
-      
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      }
-    };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  return (
-    <div className="flex justify-center space-x-4 text-white">
-      {Object.entries(timeLeft).map(([key, value]) => (
-        <div key={key} className="text-center">
-          <div className="bg-red-600 rounded-lg p-3 w-20">
-            <span className="text-2xl font-bold">{value}</span>
-          </div>
-          <div className="text-sm mt-1 capitalize">{key}</div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Voice Chat Interface
-const VoiceChat: React.FC<{
-  isListening: boolean;
-  onToggle: () => void;
-}> = ({ isListening, onToggle }) => {
-  return (
-    <div className="fixed bottom-4 right-4">
-      <button
-        onClick={onToggle}
-        className={`rounded-full w-16 h-16 flex items-center justify-center ${
-          isListening ? 'bg-red-600 animate-pulse' : 'bg-green-600'
-        }`}
-      >
-        <svg
-          className="w-8 h-8 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
-      </button>
-    </div>
-  );
-};
+import { captureEvent } from "@/utils/analytics";
+import { CardData } from "@/types/christmas";
+import Snowfall from "@/components/Snowfall";
+import ChristmasCard from "@/components/ChristmasCard";
+import CountdownTimer from "@/components/CountdownTimer";
+import VoiceChat from "@/components/VoiceChat";
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -275,7 +77,6 @@ const Index: React.FC = () => {
       has_content: !!message?.content
     });
     
-    // Immediate fetch after receiving a message
     await fetchWishlist();
   }, []);
 
