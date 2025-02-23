@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Gift, ChristmasTree } from "lucide-react";
+import { Snowflake, Gift, Tree } from "lucide-react";
 
 const Index = () => {
   const [name, setName] = useState("");
@@ -14,7 +14,7 @@ const Index = () => {
     
     try {
       setIsLoading(true);
-      await supabase.rpc('triggerName', { name: name.trim() });
+      await supabase.rpc('triggername', { name: name.trim() });
       // Additional ElevenLabs integration will go here
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -29,7 +29,7 @@ const Index = () => {
     try {
       setIsLoading(true);
       const itemKey = Date.now().toString();
-      await supabase.rpc('triggerAddItemToWishlist', {
+      await supabase.rpc('triggeradditemtowishlist', {
         itemkey: itemKey,
         itemname: wishlistItem.trim()
       });
@@ -46,7 +46,7 @@ const Index = () => {
   const handleRemoveFromWishlist = async (itemKey: string) => {
     try {
       setIsLoading(true);
-      await supabase.rpc('triggerRemoveItemFromWishlist', { itemkey: itemKey });
+      await supabase.rpc('triggerremoveitemfromwishlist', { itemkey: itemKey });
       setWishlist(wishlist.filter(item => item.key !== itemKey));
     } catch (error) {
       console.error('Error removing wishlist item:', error);
@@ -60,7 +60,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex justify-center gap-4 mb-6">
-            <ChristmasTree className="text-green-600 w-8 h-8" />
+            <Tree className="text-green-600 w-8 h-8" />
             <Snowflake className="text-blue-400 w-8 h-8 animate-spin-slow" />
             <Gift className="text-red-600 w-8 h-8" />
           </div>
