@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Snowfall Animation Component
 const Snowfall = () => {
-  const [snowflakes, setSnowflakes] = useState([]);
+  const [snowflakes, setSnowflakes] = useState<Array<{
+    id: number;
+    left: string;
+    animationDuration: string;
+    opacity: number;
+    size: number;
+  }>>([]);
 
   useEffect(() => {
     const generateSnowflakes = () => {
@@ -44,18 +51,24 @@ const Snowfall = () => {
           }}
         />
       ))}
-      <style jsx>{`
-        @keyframes fall {
-          0% { transform: translateY(-10px); }
-          100% { transform: translateY(100vh); }
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes fall {
+            0% { transform: translateY(-10px); }
+            100% { transform: translateY(100vh); }
+          }
+        `}
+      </style>
     </div>
   );
 };
 
 // Christmas Card Component
-const ChristmasCard = ({ name, wishes, location }) => {
+const ChristmasCard = ({ name, wishes, location }: { 
+  name: string; 
+  wishes: string[]; 
+  location: string; 
+}) => {
   return (
     <div className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2">
       <div className="border-4 border-red-600 p-4 rounded-lg">
@@ -94,7 +107,7 @@ const ChristmasCard = ({ name, wishes, location }) => {
 };
 
 // Countdown Timer Component
-const CountdownTimer = ({ targetDate }) => {
+const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -137,7 +150,10 @@ const CountdownTimer = ({ targetDate }) => {
 };
 
 // Voice Chat Interface
-const VoiceChat = ({ isListening, onToggle }) => {
+const VoiceChat = ({ isListening, onToggle }: { 
+  isListening: boolean; 
+  onToggle: () => void;
+}) => {
   return (
     <div className="fixed bottom-4 right-4">
       <button
