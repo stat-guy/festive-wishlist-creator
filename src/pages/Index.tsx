@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Gift, Tree } from "lucide-react";
+import { Snowflake, Gift, TreePine } from "lucide-react";
 
 const Index = () => {
   const [name, setName] = useState("");
@@ -60,7 +60,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex justify-center gap-4 mb-6">
-            <Tree className="text-green-600 w-8 h-8" />
+            <TreePine className="text-green-600 w-8 h-8" />
             <Snowflake className="text-blue-400 w-8 h-8 animate-spin-slow" />
             <Gift className="text-red-600 w-8 h-8" />
           </div>
