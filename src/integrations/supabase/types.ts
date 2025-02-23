@@ -95,6 +95,33 @@ export type Database = {
         }
         Relationships: []
       }
+      posthog_events: {
+        Row: {
+          api_key: string
+          created_at: string
+          event: string
+          id: number
+          properties: Json
+          timestamp: string | null
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          event: string
+          id?: never
+          properties: Json
+          timestamp?: string | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          event?: string
+          id?: never
+          properties?: Json
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       voice_interactions: {
         Row: {
           audio_metadata: Json | null
@@ -138,6 +165,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      captureposthogevent: {
+        Args: {
+          api_key: string
+          event: string
+          properties: Json
+        }
+        Returns: undefined
+      }
       triggeradditemtowishlist:
         | {
             Args: {
