@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Volume2, VolumeX } from "lucide-react";
@@ -167,12 +166,25 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="min-h-screen text-white overflow-hidden relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
+        style={{
+          backgroundImage: 'url("/lovable-uploads/63449d69-bda2-427d-bfd2-5293f81e7ce2.png")'
+        }}
+      >
+        {/* Overlay to ensure text readability */}
+        <div className="absolute inset-0 bg-black/20" />
+      </div>
+      
+      {/* Snowfall on top of background */}
       <Snowfall />
       
-      <div className="container mx-auto px-4 py-8">
+      {/* Main content */}
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-festive mb-4">Days Until Christmas</h1>
+          <h1 className="text-4xl font-festive mb-4 text-white drop-shadow-lg">Days Until Christmas</h1>
           <CountdownTimer targetDate={christmasDate} />
         </div>
 
