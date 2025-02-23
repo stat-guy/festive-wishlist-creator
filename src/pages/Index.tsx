@@ -1,66 +1,26 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Snowfall Animation Component
-const Snowfall = () => {
-  const [snowflakes, setSnowflakes] = useState<Array<{
-    id: number;
-    left: string;
-    animationDuration: string;
-    opacity: number;
-    size: number;
-  }>>([]);
+interface WishlistItem {
+  key: string;
+  name: string;
+  priority?: number;
+}
 
-  useEffect(() => {
-    const generateSnowflakes = () => {
-      const flakes = [];
-      for (let i = 0; i < 50; i++) {
-        flakes.push({
-          id: i,
-          left: `${Math.random() * 100}%`,
-          animationDuration: `${Math.random() * 3 + 2}s`,
-          opacity: Math.random(),
-          size: Math.random() * 4 + 2
-        });
-      }
-      setSnowflakes(flakes);
-    };
-
-    generateSnowflakes();
-    const interval = setInterval(generateSnowflakes, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none">
-      {snowflakes.map((flake) => (
-        <div
-          key={flake.id}
-          className="absolute bg-white rounded-full"
-          style={{
-            left: flake.left,
-            width: `${flake.size}px`,
-            height: `${flake.size}px`,
-            opacity: flake.opacity,
-            animation: `fall ${flake.animationDuration} linear infinite`
-          }}
-        />
-      ))}
-      <style>
-        {`
-          @keyframes fall {
-            0% { transform: translateY(-10px); }
-            100% { transform: translateY(100vh); }
-          }
-        `}
-      </style>
-    </div>
-  );
-};
+interface ConversationData {
+  name?: string;
+  wishlist?: {
+    items: WishlistItem[];
+    priority_order: string[];
+    notes: string;
+  };
+  location?: string;
+}
 
 // Christmas Card Component
 const ChristmasCard = ({ name, wishes, location }: { 
@@ -194,50 +154,43 @@ const Index = () => {
   }>({});
   const christmasDate = new Date('2025-12-25');
 
-  const handleMessage = useCallback((message: any) => {
-    console.log("Received message:", message);
-    
-    if (message.content && message.role === "assistant") {
-      // Extract name from assistant's greeting
-      if (message.content.includes("Nice to meet you")) {
-        const nameMatch = message.content.match(/Nice to meet you,\s+([^!.,]+)/i);
-        if (nameMatch && nameMatch[1]) {
-          setCardData(prev => ({ ...prev, name: nameMatch[1].trim() }));
-        }
-      }
-    }
-
-    if (message.content && message.role === "user") {
-      // Location detection
-      if (message.content.toLowerCase().includes("going to") || 
-          message.content.toLowerCase().includes("visit")) {
-        const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
-        if (locationMatches && locationMatches[1]) {
-          setCardData(prev => ({ ...prev, location: locationMatches[1].trim() }));
-        }
-      }
-    }
-  }, []);
-
   const fetchWishlist = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('wishlist, name, location')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('wishlist, name, location')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (data && !error) {
-      setCardData({
-        name: data.name || undefined,
-        wishes: data.wishlist?.items || [],
-        location: data.location || undefined
-      });
+      if (error) {
+        console.error('Error fetching wishlist:', error);
+        return;
+      }
+
+      if (data) {
+        const wishlistData = data.wishlist as { 
+          items: Array<{ key: string; name: string; priority?: number }>;
+          priority_order: string[];
+          notes: string;
+        } | null;
+
+        setCardData({
+          name: data.name || undefined,
+          wishes: wishlistData?.items || [],
+          location: data.location || undefined
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchWishlist:', error);
     }
   };
 
   useEffect(() => {
     if (isSpeaking) {
+      // Initial fetch
+      fetchWishlist();
+      // Set up polling
       const interval = setInterval(fetchWishlist, 2000);
       return () => clearInterval(interval);
     }
@@ -246,6 +199,13 @@ const Index = () => {
   const conversation = useConversation({
     onMessage: handleMessage
   });
+
+  const handleMessage = useCallback(async (message: any) => {
+    console.log("Received message:", message);
+    
+    // Fetch the latest data after each message
+    await fetchWishlist();
+  }, []);
 
   const handleStartConversation = async () => {
     try {
@@ -310,9 +270,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Snowfall />
-      
+    <div 
+      className="min-h-screen bg-cover bg-center text-white"
+      style={{
+        backgroundImage: 'url("https://fal.ai/models/fal-ai/veo2/playground?share=f9500ea9-58a0-4f02-b274-06a3984d2bb9")',
+        backgroundColor: '#1a1a1a'
+      }}
+    >
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-festive mb-4">Days Until Christmas</h1>
