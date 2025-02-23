@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Gift, TreePine, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,55 +14,45 @@ const Index = () => {
   const [location, setLocation] = useState<string>("");
   const conversation = useConversation();
 
-  // Listen to conversation messages to extract wishes
-  useEffect(() => {
-    if (!conversation) return;
-
-    const handleMessage = (message: any) => {
-      console.log("Received message:", message);
+  const handleMessage = useCallback((message: any) => {
+    console.log("Received message:", message);
+    
+    // Check if the message contains a wish
+    if (message.content && message.role === "user") {
+      // Simple wish detection - look for phrases like "I want" or "I wish"
+      const wishPhrases = ["i want", "i wish", "i would like", "can i have"];
+      const contentLower = message.content.toLowerCase();
       
-      // Check if the message contains a wish
-      if (message.content && message.role === "user") {
-        // Simple wish detection - look for phrases like "I want" or "I wish"
-        const wishPhrases = ["i want", "i wish", "i would like", "can i have"];
-        const contentLower = message.content.toLowerCase();
-        
-        for (const phrase of wishPhrases) {
-          if (contentLower.includes(phrase)) {
-            const startIndex = contentLower.indexOf(phrase) + phrase.length;
-            let wish = message.content.slice(startIndex).trim();
-            // Remove common filler words
-            wish = wish.replace(/^(a |an |the |to |for )/i, "").trim();
-            
-            // Add to wishlist if it's not already there
-            const itemKey = Date.now().toString();
-            setWishlist(prev => {
-              if (!prev.some(item => item.name.toLowerCase() === wish.toLowerCase())) {
-                return [...prev, { key: itemKey, name: wish }];
-              }
-              return prev;
-            });
-            break;
-          }
+      for (const phrase of wishPhrases) {
+        if (contentLower.includes(phrase)) {
+          const startIndex = contentLower.indexOf(phrase) + phrase.length;
+          let wish = message.content.slice(startIndex).trim();
+          // Remove common filler words
+          wish = wish.replace(/^(a |an |the |to |for )/i, "").trim();
+          
+          // Add to wishlist if it's not already there
+          const itemKey = Date.now().toString();
+          setWishlist(prev => {
+            if (!prev.some(item => item.name.toLowerCase() === wish.toLowerCase())) {
+              return [...prev, { key: itemKey, name: wish }];
+            }
+            return prev;
+          });
+          break;
         }
       }
+    }
 
-      // Check if the message contains a location
-      if (message.content && message.role === "user" && 
-          (message.content.toLowerCase().includes("going to") || 
-           message.content.toLowerCase().includes("visit"))) {
-        const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
-        if (locationMatches && locationMatches[1]) {
-          setLocation(locationMatches[1].trim());
-        }
+    // Check if the message contains a location
+    if (message.content && message.role === "user" && 
+        (message.content.toLowerCase().includes("going to") || 
+         message.content.toLowerCase().includes("visit"))) {
+      const locationMatches = message.content.match(/(?:going to|visit)\s+([^,.!?]+)/i);
+      if (locationMatches && locationMatches[1]) {
+        setLocation(locationMatches[1].trim());
       }
-    };
-
-    conversation.on("message", handleMessage);
-    return () => {
-      conversation.off("message", handleMessage);
-    };
-  }, [conversation]);
+    }
+  }, []);
 
   useEffect(() => {
     const requestMicrophoneAccess = async () => {
