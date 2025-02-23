@@ -47,12 +47,25 @@ const Index: React.FC = () => {
       }
 
       if (data) {
-        const wishlistData = data.wishlist as { items: string[] } | null;
+        console.log('Fetched conversation data:', data); // Debug log
+        
+        // Extract wishes from the wishlist structure
+        let wishes: string[] = [];
+        if (data.wishlist && typeof data.wishlist === 'object') {
+          if (Array.isArray(data.wishlist.items)) {
+            wishes = data.wishlist.items.map((item: any) => item.name || item);
+          } else if (Array.isArray(data.wishlist)) {
+            wishes = data.wishlist.map((item: any) => item.name || item);
+          }
+        }
+
         const newCardData = {
           name: data.name || '',
-          wishes: wishlistData?.items || [],
+          wishes: wishes,
           location: data.location || ''
         };
+        
+        console.log('Setting card data:', newCardData); // Debug log
         
         setCardData(newCardData);
         await captureEvent('wishlist_updated', { 
@@ -80,12 +93,14 @@ const Index: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Initial fetch when component mounts
+    fetchWishlist();
+    
     if (isSpeaking) {
-      fetchWishlist();
       const interval = setInterval(fetchWishlist, 2000);
       return () => clearInterval(interval);
     }
-  }, [isSpeaking]);
+  }, [isSpeaking]); // Added initial fetch
 
   const conversation = useConversation({
     onMessage: handleMessage
