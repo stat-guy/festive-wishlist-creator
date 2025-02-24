@@ -55,14 +55,7 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
         <div className="mt-8 text-center text-sm text-gray-600">Made with ❤️ in the North Pole by Kai x ElevenLabs x Lovable.Dev x PostHog x Supabase x Anthropic(via the Github MCP Tool)</div>
 
         <div className="mt-6 flex justify-center">
-          <motion.button onClick={onEmailCard} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm" whileHover={{
-          scale: 1.02
-        }} whileTap={{
-          scale: 0.98
-        }}>
-            <span>Email card to yourself</span>
-            <span>📧</span>
-          </motion.button>
+          
         </div>
       </div>
     </motion.div>;
