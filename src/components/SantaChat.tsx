@@ -1,94 +1,40 @@
-// Previous imports remain the same...
+import React from 'react';
+import { motion, AnimatePresence } from "framer-motion";
 
-interface CardData {
-  name: string;
-  wishes: string[];
-  location: string;
+interface SantaChatProps {
+  isActive: boolean;
+  messages: string[];
+  onClose: () => void;
 }
 
-interface Message {
-  source: 'ai' | 'user';
-  message: string;
-  type?: 'name' | 'wish' | 'location';
-}
-
-// Update the ChristmasCard component to better handle dynamic updates
-const ChristmasCard: React.FC<CardData> = ({ name, wishes, location }) => {
+const SantaChat: React.FC<SantaChatProps> = ({ isActive, messages, onClose }) => {
   return (
-    <motion.div
-      className="w-96 bg-white rounded-lg shadow-xl p-6 transform rotate-2"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="border-4 border-red-600 p-4 rounded-lg">
-        <h2 className="text-2xl font-festive text-red-600 text-center mb-4">
-          My Letter to Santa
-        </h2>
-        
-        <div className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <p className="font-festive text-lg">Dear Santa,</p>
-            <p className="font-festive text-lg">
-              My name is <span className="font-bold">{name || '_______'}</span>
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <p className="font-festive text-lg">This Christmas, I wish for:</p>
-            <ul className="list-disc pl-6 font-festive">
-              {wishes && wishes.length > 0 ? (
-                wishes.map((wish, index) => (
-                  <motion.li
-                    key={index}
-                    className="text-lg"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + index * 0.2 }}
-                  >
-                    {wish}
-                  </motion.li>
-                ))
-              ) : (
-                <li className="text-lg">_______</li>
-              )}
-            </ul>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            {location ? (
-              <p className="font-festive text-lg">
-                I'll be celebrating in <span className="font-bold">{location}</span>!
+    <AnimatePresence>
+      {isActive && (
+        <motion.div
+          className="fixed bottom-0 right-0 m-4 bg-white rounded-lg shadow-xl overflow-hidden max-w-md"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="bg-red-600 text-white p-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Santa's Chat</h2>
+            <button onClick={onClose} className="text-white hover:text-gray-200 focus:outline-none">
+              Close
+            </button>
+          </div>
+          <div className="p-4">
+            {messages.map((message, index) => (
+              <p key={index} className="mb-2">
+                {message}
               </p>
-            ) : (
-              <p className="font-festive text-lg">I'll be celebrating in _______!</p>
-            )}
-          </motion.div>
-
-          <motion.p
-            className="font-festive text-lg text-right mt-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
-            Thank you, Santa!
-          </motion.p>
-        </div>
-      </div>
-    </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
-// Rest of the component remains the same...
+export default SantaChat;
