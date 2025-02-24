@@ -1,44 +1,63 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { ElevenLabsService } from '../services/elevenlabsService';
-import { toast } from '@/components/ui/use-toast';
+
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  message: string;
+}
 
 export const useConversation = () => {
   const [isActive, setIsActive] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const elevenlabsService = ElevenLabsService.getInstance();
 
+  // Handle incoming messages from the parent window
   useEffect(() => {
-    console.log('Setting up conversation state listener');
-    const handleConversationState = (event: MessageEvent) => {
-      console.log('Received message event:', event.data);
-      if (event.data?.type === 'CONVERSATION_STATE_CHANGE') {
-        console.log('Setting conversation state to:', event.data.isActive);
-        setIsActive(event.data.isActive);
+    const handleMessage = (event: MessageEvent) => {
+      const { type, data } = event.data;
+
+      switch (type) {
+        case 'CONVERSATION_READY':
+          setIsActive(true);
+          setIsInitializing(false);
+          setError(null);
+          break;
+
+        case 'CONVERSATION_ERROR':
+          setIsActive(false);
+          setIsInitializing(false);
+          setError(data.error);
+          break;
+
+        case 'CONVERSATION_ENDED':
+          setIsActive(false);
+          setIsInitializing(false);
+          setError(null);
+          break;
+
+        case 'CONVERSATION_MESSAGE':
+          // Handle incoming message - this will be handled by the message processor
+          break;
       }
     };
 
-    window.addEventListener('message', handleConversationState);
-    return () => window.removeEventListener('message', handleConversationState);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const startConversation = useCallback(async () => {
     try {
+      setIsInitializing(true);
+      setError(null);
       console.log('useConversation: Starting conversation with Santa...');
       await elevenlabsService.startConversation();
-      console.log('useConversation: Conversation started successfully');
-      setIsActive(true);
-      toast({
-        title: "Connected with Santa!",
-        description: "You can now talk with Santa.",
-      });
     } catch (error) {
       console.error('useConversation: Failed to start conversation:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start conversation');
       setIsActive(false);
-      toast({
-        title: "Connection Failed",
-        description: "Could not connect to Santa. Please try again.",
-        variant: "destructive",
-      });
+    } finally {
+      setIsInitializing(false);
     }
   }, [elevenlabsService]);
 
@@ -46,20 +65,18 @@ export const useConversation = () => {
     try {
       console.log('useConversation: Ending conversation with Santa...');
       await elevenlabsService.endConversation();
-      console.log('useConversation: Successfully ended conversation');
       setIsActive(false);
+      setError(null);
     } catch (error) {
       console.error('useConversation: Failed to end conversation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to end conversation. Please try again.",
-        variant: "destructive",
-      });
+      setError(error instanceof Error ? error.message : 'Failed to end conversation');
     }
   }, [elevenlabsService]);
 
   return {
     isActive,
+    isInitializing,
+    error,
     startConversation,
     endConversation
   };
