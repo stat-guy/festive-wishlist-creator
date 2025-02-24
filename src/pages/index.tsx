@@ -117,10 +117,11 @@ const Index: React.FC = () => {
     <div 
       className="min-h-screen flex flex-col items-center justify-center p-6 relative"
       style={{
-        backgroundImage: "url('/converted_image.jpeg')",
+        backgroundImage: "url('/lovable-uploads/2f9b7554-2fb8-4904-96e2-c1c5fa3b8f2b.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)' // Adding a slight overlay to ensure content remains readable
       }}
     >
       {/* Snow Effect */}
