@@ -9,6 +9,7 @@ export interface ElevenLabsCredentials {
 export interface ConversationState {
   isActive: boolean;
   conversationId?: string;
+  signedUrl?: string;
 }
 
 export class ElevenLabsService {
@@ -58,11 +59,37 @@ export class ElevenLabsService {
     return this.credentials;
   }
 
+  private async getSignedUrl(credentials: ElevenLabsCredentials): Promise<string> {
+    console.log('ElevenLabsService: Getting signed URL');
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${credentials.agent_id}`,
+      {
+        method: 'GET',
+        headers: {
+          'xi-api-key': credentials.api_key
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to get signed URL');
+    }
+
+    const data = await response.json();
+    console.log('ElevenLabsService: Got signed URL:', data.signed_url);
+    return data.signed_url;
+  }
+
   async startConversation(): Promise<void> {
     try {
       console.log('ElevenLabsService: Starting conversation');
       const credentials = await this.fetchCredentials();
-      console.log('ElevenLabsService: Got credentials, sending start message');
+      
+      // Get signed URL first
+      const signedUrl = await this.getSignedUrl(credentials);
+      this.conversationState.signedUrl = signedUrl;
+      
+      console.log('ElevenLabsService: Initializing conversation with signed URL');
       
       return new Promise((resolve, reject) => {
         // Setup one-time listener for response
@@ -77,12 +104,11 @@ export class ElevenLabsService {
 
         window.addEventListener('message', handleResponse);
         
-        // Send message to parent window
+        // Send message to parent window with signed URL
         window.parent.postMessage({
           type: 'START_CONVERSATION',
           data: {
-            agentId: credentials.agent_id,
-            apiKey: credentials.api_key
+            signedUrl: this.conversationState.signedUrl
           }
         }, '*');
         
@@ -109,6 +135,7 @@ export class ElevenLabsService {
             window.removeEventListener('message', handleResponse);
             this.conversationState.isActive = false;
             this.conversationState.conversationId = undefined;
+            this.conversationState.signedUrl = undefined;
             resolve();
           }
         };
