@@ -1,27 +1,30 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import ChristmasCard from './components/ChristmasCard';
+import ChristmasTimer from './components/ChristmasTimer';
+import { useConversation } from './hooks/useConversation';
 
-const queryClient = new QueryClient();
+const App: React.FC = () => {
+  const { isActive, isInitializing, error, startConversation, endConversation } = useConversation();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  return (
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-12">
+      <ChristmasTimer />
+      
+      {/* Main content container without height constraints */}
+      <div className="container mx-auto px-4 relative">
+        <ChristmasCard
+          name=""
+          wishes={[]}
+          location=""
+          isCallActive={isActive}
+          isInitializing={isInitializing}
+          error={error}
+          onStartCall={startConversation}
+          onEndCall={endConversation}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default App;
