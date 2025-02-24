@@ -1,11 +1,10 @@
+
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
-import ChristmasTimer from '../components/ChristmasTimer';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { captureEvent } from '@/utils/analytics';
-import Snowfall from 'react-snowfall';
 
 declare global {
   namespace JSX {
@@ -56,27 +55,26 @@ const Index: React.FC = () => {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
         event.detail.config.clientTools = {
           triggerName: ({ name }: { name: string }) => {
-            updateCardData({ name });
+            updateCardData({ 
+              name,
+              wishes: undefined // Don't modify wishes when updating name
+            });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            if (!cardData.wishes.includes(itemName)) {
-              updateCardData({ wishes: [itemName] }); // Send as single-item array
-              toast.success(`Added ${itemName} to your wishlist!`);
-              logInteraction('wishlist_update', { 
-                itemKey, 
-                itemName,
-                currentWishCount: cardData.wishes.length + 1 
-              });
-              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
-            } else {
-              toast.info(`${itemName} is already on your wishlist!`);
-              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
-            }
+            // Create a new array with the existing wishes plus the new wish
+            updateCardData({ 
+              name: undefined, // Don't modify name when updating wishes
+              wishes: [itemName] // Pass as single item array to be merged with existing wishes
+            });
+            toast.success(`Added ${itemName} to your wishlist!`);
+            logInteraction('wishlist_update', { itemKey, itemName });
+            return `Added ${itemName} to wishlist`;
           },
           emailCard: () => {
+            console.log('Email functionality coming soon');
             toast.info('Email feature coming soon!');
             return "Email feature is under development";
           }
@@ -94,7 +92,7 @@ const Index: React.FC = () => {
         });
       });
     }
-  }, [cardData.wishes, updateCardData, logInteraction]);
+  }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -116,41 +114,16 @@ const Index: React.FC = () => {
   }, [configureWidget]);
 
   return (
-    <div 
-      className="min-h-screen flex flex-col items-center justify-center p-6 relative"
-      style={{
-        backgroundImage: "url('/converted_image.jpeg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Snow Effect */}
-      <Snowfall 
-        snowflakeCount={200}
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-        }}
-      />
-
-      {/* Christmas Timer */}
-      <ChristmasTimer />
-      
-      {/* ElevenLabs Widget */}
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
       <elevenlabs-convai 
         agent-id="xrfJ41NhW2YAQ44g5KXC"
-        className="w-full max-w-4xl h-[700px] mb-8 relative z-10"
+        className="w-full max-w-4xl h-[700px] mb-8"
       />
       
-      {/* Christmas Card */}
-      <div className="relative z-10">
-        <ChristmasCard
-          {...cardData}
-          onEmailCard={handleEmailCard}
-        />
-      </div>
+      <ChristmasCard
+        {...cardData}
+        onEmailCard={handleEmailCard}
+      />
     </div>
   );
 };
