@@ -60,21 +60,21 @@ const Index: React.FC = () => {
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            // Get current wishes and append new wish
-            const currentWishes = cardData.wishes || [];
-            const updatedWishes = [...new Set([...currentWishes, itemName])];
-            
-            updateCardData({ wishes: updatedWishes });
-            toast.success(`Added ${itemName} to your wishlist!`);
-            logInteraction('wishlist_update', { 
-              itemKey, 
-              itemName,
-              currentWishCount: updatedWishes.length 
-            });
-            return `Added ${itemName} to wishlist. You now have ${updatedWishes.length} items on your list!`;
+            if (!cardData.wishes.includes(itemName)) {
+              updateCardData({ wishes: [itemName] }); // Send as single-item array
+              toast.success(`Added ${itemName} to your wishlist!`);
+              logInteraction('wishlist_update', { 
+                itemKey, 
+                itemName,
+                currentWishCount: cardData.wishes.length + 1 
+              });
+              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
+            } else {
+              toast.info(`${itemName} is already on your wishlist!`);
+              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
+            }
           },
           emailCard: () => {
-            console.log('Email functionality coming soon');
             toast.info('Email feature coming soon!');
             return "Email feature is under development";
           }
