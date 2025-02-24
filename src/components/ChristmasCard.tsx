@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-
 interface ChristmasCardProps {
   name: string;
   wishes: string[];
@@ -13,7 +11,6 @@ interface ChristmasCardProps {
   onEndCall?: () => void;
   onEmailCard?: () => void;
 }
-
 const ChristmasCard: React.FC<ChristmasCardProps> = ({
   name,
   wishes,
@@ -75,25 +72,7 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
             </div>}
 
           <div className="mt-6 flex justify-between items-center gap-4">
-            {onStartCall && onEndCall && <motion.button onClick={isCallActive ? onEndCall : onStartCall} disabled={isInitializing} className={`relative px-6 py-2.5 rounded-lg transition-colors font-medium text-sm flex items-center gap-2 ${isInitializing ? 'bg-gray-400 cursor-not-allowed' : isCallActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white`} whileHover={!isInitializing ? {
-            scale: 1.02
-          } : {}} whileTap={!isInitializing ? {
-            scale: 0.98
-          } : {}}>
-                {isInitializing ? <>
-                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>Connecting to Santa...</span>
-                  </> : isCallActive ? <>
-                    <span>End Call with Santa</span>
-                    <span>📞</span>
-                  </> : <>
-                    <span>Talk with Santa</span>
-                    <span>🎅</span>
-                  </>}
-              </motion.button>}
+            {onStartCall && onEndCall}
             
             {onEmailCard && <motion.button onClick={onEmailCard} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm" whileHover={{
             scale: 1.02
@@ -108,5 +87,4 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
       </motion.div>
     </div>;
 };
-
 export default ChristmasCard;
