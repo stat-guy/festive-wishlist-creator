@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { MessageHandler, type Message, type CardData } from '../services/messageHandler';
+import { ElevenLabsService } from '../services/elevenlabsService';
 
 const Index: React.FC = () => {
   const [cardData, setCardData] = useState<CardData>({
@@ -9,6 +10,7 @@ const Index: React.FC = () => {
     location: ''
   });
   const [isCallActive, setIsCallActive] = useState(false);
+  const elevenlabsService = ElevenLabsService.getInstance();
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -30,14 +32,23 @@ const Index: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const handleStartCall = () => {
-    setIsCallActive(true);
-    // Add call start logic here
+  const handleStartCall = async () => {
+    try {
+      await elevenlabsService.startConversation();
+      setIsCallActive(true);
+    } catch (error) {
+      console.error('Failed to start call:', error);
+      setIsCallActive(false);
+    }
   };
 
-  const handleEndCall = () => {
-    setIsCallActive(false);
-    // Add call end logic here
+  const handleEndCall = async () => {
+    try {
+      await elevenlabsService.endConversation();
+      setIsCallActive(false);
+    } catch (error) {
+      console.error('Failed to end call:', error);
+    }
   };
 
   const handleEmailCard = () => {
