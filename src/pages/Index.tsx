@@ -110,15 +110,14 @@ const Index: React.FC = () => {
   }, [configureWidget]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 gap-8">
-      {/* ElevenLabs Widget */}
-      <div className="w-full max-w-2xl bg-white rounded-lg p-4 shadow-lg mb-8">
-        <elevenlabs-convai 
-          agent-id="xrfJ41NhW2YAQ44g5KXC"
-          className="w-full h-[600px]"
-        ></elevenlabs-convai>
-      </div>
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
+      {/* ElevenLabs Widget - Made larger and removed white background */}
+      <elevenlabs-convai 
+        agent-id="xrfJ41NhW2YAQ44g5KXC"
+        className="w-full max-w-4xl h-[700px] mb-8"
+      ></elevenlabs-convai>
       
+      {/* Christmas Card */}
       <ChristmasCard
         {...cardData}
         onEmailCard={handleEmailCard}
