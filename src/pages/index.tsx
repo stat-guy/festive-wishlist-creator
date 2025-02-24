@@ -120,8 +120,7 @@ const Index: React.FC = () => {
         backgroundImage: "url('/converted_image.jpeg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)' // Adding a slight overlay to ensure content remains readable
+        backgroundRepeat: 'no-repeat'
       }}
     >
       {/* Snow Effect */}
