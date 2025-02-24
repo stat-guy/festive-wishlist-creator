@@ -18,6 +18,7 @@ export const useConversation = () => {
 
   const startConversation = useCallback(async () => {
     try {
+      console.log('Starting conversation with Santa...');
       await elevenlabsService.startConversation();
       setIsActive(true);
     } catch (error) {
@@ -28,6 +29,7 @@ export const useConversation = () => {
 
   const endConversation = useCallback(async () => {
     try {
+      console.log('Ending conversation with Santa...');
       await elevenlabsService.endConversation();
       setIsActive(false);
     } catch (error) {
