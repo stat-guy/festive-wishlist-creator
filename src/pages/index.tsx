@@ -1,9 +1,12 @@
+
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { captureEvent } from '@/utils/analytics';
+import ChristmasTimer from '@/components/ChristmasTimer';
+import Snowfall from 'react-snowfall';
 
 declare global {
   namespace JSX {
@@ -114,7 +117,14 @@ const Index: React.FC = () => {
   }, [configureWidget]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 relative">
+      <Snowfall 
+        color="white"
+        snowflakeCount={200}
+        speed={[0.5, 2]}
+        wind={[-0.5, 2]}
+      />
+      <ChristmasTimer />
       <elevenlabs-convai 
         agent-id="xrfJ41NhW2YAQ44g5KXC"
         className="w-full max-w-4xl h-[700px] mb-8"

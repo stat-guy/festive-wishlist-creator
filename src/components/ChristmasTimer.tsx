@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 const ChristmasTimer: React.FC = () => {
@@ -36,25 +37,20 @@ const ChristmasTimer: React.FC = () => {
     <div className="text-center mb-8">
       <h2 className="text-white text-2xl mb-4">Days Until Christmas</h2>
       <div className="flex justify-center gap-4">
-        <div className="bg-red-600 rounded-lg p-4 w-24">
-          <div className="text-3xl font-bold text-white">{timeLeft.days}</div>
-          <div className="text-sm text-white">Days</div>
-        </div>
-        <div className="bg-red-600 rounded-lg p-4 w-24">
-          <div className="text-3xl font-bold text-white">{timeLeft.hours}</div>
-          <div className="text-sm text-white">Hours</div>
-        </div>
-        <div className="bg-red-600 rounded-lg p-4 w-24">
-          <div className="text-3xl font-bold text-white">{timeLeft.minutes}</div>
-          <div className="text-sm text-white">Minutes</div>
-        </div>
-        <div className="bg-red-600 rounded-lg p-4 w-24">
-          <div className="text-3xl font-bold text-white">{timeLeft.seconds}</div>
-          <div className="text-sm text-white">Seconds</div>
-        </div>
+        <TimeBox value={timeLeft.days} label="Days" />
+        <TimeBox value={timeLeft.hours} label="Hours" />
+        <TimeBox value={timeLeft.minutes} label="Minutes" />
+        <TimeBox value={timeLeft.seconds} label="Seconds" />
       </div>
     </div>
   );
 };
+
+const TimeBox: React.FC<{ value: number; label: string }> = ({ value, label }) => (
+  <div className="bg-[#ea384c] rounded-lg p-4 w-24 shadow-lg transform hover:scale-105 transition-transform duration-200">
+    <div className="text-3xl font-bold text-white">{value}</div>
+    <div className="text-sm text-white">{label}</div>
+  </div>
+);
 
 export default ChristmasTimer;
