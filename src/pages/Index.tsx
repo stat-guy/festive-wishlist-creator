@@ -9,13 +9,6 @@ declare global {
     interface IntrinsicElements {
       'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'agent-id': string;
-        'avatar-orb-color-1'?: string;
-        'avatar-orb-color-2'?: string;
-        'override-config'?: string;
-        'dynamic-variables'?: string;
-        'variant'?: 'expanded' | 'full' | 'expandable';
-        'speaking-text'?: string;
-        'listening-text'?: string;
       };
     }
   }
@@ -78,20 +71,6 @@ const Index: React.FC = () => {
         <elevenlabs-convai 
           agent-id="xrfJ41NhW2YAQ44g5KXC"
           className="w-full h-[600px]"
-          variant="full"
-          avatar-orb-color-1="#ff0000"
-          avatar-orb-color-2="#00ff00"
-          speaking-text="Santa is speaking..."
-          listening-text="Santa is listening..."
-          override-config={JSON.stringify({
-            agent: {
-              prompt: {
-                prompt: "You are Santa Claus, helping children write their Christmas letters. Extract their name and wishes, then use the updateChristmasCard client tool to update the card with this information."
-              },
-              first_message: "Ho ho ho! Merry Christmas! I'm Santa Claus. What's your name, and what would you like for Christmas?",
-              language: "en"
-            }
-          })}
         ></elevenlabs-convai>
       </div>
       
