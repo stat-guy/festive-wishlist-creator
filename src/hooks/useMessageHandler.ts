@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { Message, MessageProcessor } from '../services/messageProcessor';
 
@@ -47,6 +48,14 @@ export const useMessageHandler = () => {
     });
   }, []);
 
+  const updateCardData = useCallback(({ name, wishes }: { name: string; wishes: string[] }) => {
+    setCardData(prev => ({
+      ...prev,
+      name: name || prev.name,
+      wishes: wishes || prev.wishes
+    }));
+  }, []);
+
   useEffect(() => {
     const handleConversationUpdate = (event: MessageEvent) => {
       if (typeof event.data === 'object' && event.data !== null) {
@@ -58,5 +67,5 @@ export const useMessageHandler = () => {
     return () => window.removeEventListener('message', handleConversationUpdate);
   }, [handleMessage]);
 
-  return { cardData, handleMessage };
+  return { cardData, handleMessage, updateCardData };
 };
