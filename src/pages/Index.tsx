@@ -26,7 +26,6 @@ const Index: React.FC = () => {
 
   const logInteraction = useCallback(async (type: string, content: any) => {
     try {
-      // Log to Supabase
       const { error } = await supabase
         .from('voice_interactions')
         .insert([
@@ -42,7 +41,6 @@ const Index: React.FC = () => {
         console.error('Error logging to Supabase:', error);
       }
 
-      // Log to PostHog
       captureEvent('voice_interaction', {
         interaction_type: type,
         content: content
@@ -57,14 +55,20 @@ const Index: React.FC = () => {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
         event.detail.config.clientTools = {
           triggerName: ({ name }: { name: string }) => {
-            updateCardData({ name, wishes: cardData.wishes });
+            updateCardData({ 
+              name,
+              wishes: cardData.wishes // Preserve existing wishes
+            });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            const updatedWishes = [...cardData.wishes, itemName];
-            updateCardData({ name: cardData.name, wishes: updatedWishes });
+            const updatedWishes = [...cardData.wishes, itemName]; // Add new wish to existing wishes
+            updateCardData({ 
+              name: cardData.name, // Preserve existing name
+              wishes: updatedWishes 
+            });
             toast.success(`Added ${itemName} to your wishlist!`);
             logInteraction('wishlist_update', { itemKey, itemName });
             return `Added ${itemName} to wishlist`;
@@ -111,13 +115,11 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
-      {/* ElevenLabs Widget - Made larger and removed white background */}
       <elevenlabs-convai 
         agent-id="xrfJ41NhW2YAQ44g5KXC"
         className="w-full max-w-4xl h-[700px] mb-8"
-      ></elevenlabs-convai>
+      />
       
-      {/* Christmas Card */}
       <ChristmasCard
         {...cardData}
         onEmailCard={handleEmailCard}
