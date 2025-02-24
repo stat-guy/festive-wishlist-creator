@@ -61,13 +61,19 @@ export class ElevenLabsService {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get signed URL');
+      const errorText = await response.text();
+      throw new Error(`Failed to get signed URL: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    if (!data.signed_url) {
-      throw new Error('Invalid response format: missing signed_url');
+    if (!data) {
+      throw new Error('Invalid response: empty response from signed URL endpoint');
     }
+    
+    if (!data.signed_url) {
+      throw new Error('Invalid response format: missing signed_url property');
+    }
+    
     return data.signed_url;
   }
 
@@ -88,12 +94,31 @@ export class ElevenLabsService {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get conversation token');
+      const errorText = await response.text();
+      throw new Error(`Failed to get conversation token: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    if (!data.token?.conversation_token) {
-      throw new Error('Invalid response format: missing token.conversation_token');
+    if (!data) {
+      throw new Error('Invalid response: empty response from conversation token endpoint');
+    }
+
+    // Log response for debugging
+    console.log('Token response:', JSON.stringify(data, null, 2));
+
+    // Check for token in response
+    if (!data.token) {
+      throw new Error('Invalid response format: missing token object');
+    }
+
+    // Verify conversation token exists and is a string
+    if (typeof data.token.conversation_token !== 'string') {
+      throw new Error('Invalid response format: conversation_token must be a string');
+    }
+
+    // Verify agent_id matches what we expect
+    if (data.agent_id !== credentials.agent_id) {
+      throw new Error('Invalid response: agent_id mismatch');
     }
 
     return {
@@ -110,14 +135,10 @@ export class ElevenLabsService {
 
       // Get signed URL and token sequentially to handle potential errors better
       const signedUrl = await this.getSignedUrl();
-      console.log('ElevenLabsService: Got signed URL');
+      console.log('ElevenLabsService: Got signed URL:', signedUrl);
 
       const tokenData = await this.getConversationToken();
-      console.log('ElevenLabsService: Got conversation token');
-
-      if (!tokenData.conversationToken) {
-        throw new Error('Failed to initialize conversation: Missing conversation token');
-      }
+      console.log('ElevenLabsService: Got conversation token:', tokenData.conversationToken);
 
       this.conversationState.signedUrl = signedUrl;
       this.conversationState.conversationToken = tokenData.conversationToken;
@@ -147,7 +168,7 @@ export class ElevenLabsService {
       if (this.conversationState.conversationId) {
         const credentials = await this.fetchCredentials();
         
-        await fetch(
+        const response = await fetch(
           `https://api.elevenlabs.io/v1/convai/conversations/${this.conversationState.conversationId}`,
           {
             method: 'DELETE',
@@ -156,6 +177,11 @@ export class ElevenLabsService {
             }
           }
         );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`Failed to delete conversation: ${response.status} - ${errorText}`);
+        }
       }
 
       // Send message to parent window to end conversation
