@@ -3,6 +3,8 @@ import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { captureEvent } from '@/utils/analytics';
 
 declare global {
   namespace JSX {
@@ -22,6 +24,34 @@ const Index: React.FC = () => {
     console.log('Email card functionality coming soon');
   }, []);
 
+  const logInteraction = useCallback(async (type: string, content: any) => {
+    try {
+      // Log to Supabase
+      const { error } = await supabase
+        .from('voice_interactions')
+        .insert([
+          {
+            interaction_type: type,
+            transcription: content.transcription || null,
+            response_text: content.response || null,
+            audio_metadata: content.audio || null
+          }
+        ]);
+
+      if (error) {
+        console.error('Error logging to Supabase:', error);
+      }
+
+      // Log to PostHog
+      captureEvent('voice_interaction', {
+        interaction_type: type,
+        content: content
+      });
+    } catch (err) {
+      console.error('Error logging interaction:', err);
+    }
+  }, []);
+
   const configureWidget = useCallback((widget: Element) => {
     if (widget) {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
@@ -29,6 +59,9 @@ const Index: React.FC = () => {
           updateChristmasCard: ({ name, wishes }: { name: string; wishes: string[] }) => {
             updateCardData({ name, wishes });
             toast.success('Christmas card updated!');
+
+            // Log card update
+            logInteraction('card_update', { name, wishes });
             return "Card updated successfully";
           },
           emailCard: () => {
@@ -40,10 +73,18 @@ const Index: React.FC = () => {
       });
 
       widget.addEventListener('elevenlabs-convai:message', (event: any) => {
-        console.log('Message received:', event.detail);
+        const messageData = event.detail;
+        console.log('Message received:', messageData);
+
+        // Log each message interaction
+        logInteraction('conversation_message', {
+          transcription: messageData.transcription,
+          response: messageData.response,
+          audio: messageData.audio
+        });
       });
     }
-  }, [updateCardData]);
+  }, [updateCardData, logInteraction]);
 
   useEffect(() => {
     const script = document.createElement('script');
