@@ -95,22 +95,10 @@ const Index: React.FC = () => {
   }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://elevenlabs.io/convai-widget/index.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      const widget = document.querySelector('elevenlabs-convai');
-      if (widget) {
-        configureWidget(widget);
-      }
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    const widget = document.querySelector('elevenlabs-convai');
+    if (widget) {
+      configureWidget(widget);
+    }
   }, [configureWidget]);
 
   return (
