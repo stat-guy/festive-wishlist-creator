@@ -36,6 +36,25 @@ export class ElevenLabsApiClient {
       console.log(`Attempt ${attempts} of ${maxAttempts} to get conversation token...`);
 
       try {
+        // First, try to initialize the agent
+        const initResponse = await fetch(
+          `https://api.elevenlabs.io/v1/convai/agents/${credentials.agent_id}/initialize`,
+          {
+            method: 'POST',
+            headers: {
+              'xi-api-key': credentials.api_key,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (!initResponse.ok) {
+          console.warn(`Agent initialization failed with status ${initResponse.status}`);
+          const errorText = await initResponse.text();
+          throw new Error(`Failed to initialize agent: ${initResponse.status} - ${errorText}`);
+        }
+
+        // Then get the conversation token
         const response = await fetch(
           `https://api.elevenlabs.io/v1/convai/agents/${credentials.agent_id}/link`,
           {
@@ -56,24 +75,14 @@ export class ElevenLabsApiClient {
         const data = await response.json();
         console.log('Token response:', JSON.stringify(data, null, 2));
 
-        // Validate the response structure
-        if (!data) {
-          throw new Error('Empty response received');
-        }
-
         // Check if we have a token object with a conversation_token
-        if (!data.token || !data.token.conversation_token) {
+        if (!data || !data.token || !data.token.conversation_token) {
           if (attempts === maxAttempts) {
             throw new Error('Invalid response: missing conversation token');
           }
           console.log('No valid token received, waiting before retry...');
           await new Promise(resolve => setTimeout(resolve, delayBetweenAttempts));
           continue;
-        }
-
-        // Ensure we have both required fields
-        if (typeof data.token.conversation_token !== 'string' || typeof data.agent_id !== 'string') {
-          throw new Error('Invalid response format: missing required fields');
         }
 
         return {
