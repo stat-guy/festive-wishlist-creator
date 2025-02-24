@@ -1,116 +1,82 @@
-
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
-import { useMessageHandler } from '../hooks/useMessageHandler';
-import { toast } from 'sonner';
-import { supabase } from "@/integrations/supabase/client";
-import { captureEvent } from '@/utils/analytics';
+import ChristmasTimer from '../components/ChristmasTimer';
+
+interface CardData {
+  name: string;
+  wishes: string[];
+  location: string;
+}
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        'agent-id': string;
-      };
+      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
+        'agent-id'?: string;
+        className?: string;
+      }, HTMLElement>;
     }
   }
 }
 
 const Index: React.FC = () => {
-  const { cardData, updateCardData } = useMessageHandler();
+  const [cardData, setCardData] = useState<CardData>({
+    name: '',
+    wishes: [],
+    location: ''
+  });
 
-  const handleEmailCard = useCallback(() => {
-    toast.info('Email functionality coming soon!');
-    console.log('Email card functionality coming soon');
-  }, []);
+  const updateCardData = (data: Partial<CardData>) => {
+    setCardData(prev => ({ ...prev, ...data }));
+  };
 
-  const logInteraction = useCallback(async (type: string, content: any) => {
-    try {
-      // Log to Supabase
-      const { error } = await supabase
-        .from('voice_interactions')
-        .insert([
-          {
-            interaction_type: type,
-            transcription: content.transcription || null,
-            response_text: content.response || null,
-            audio_metadata: content.audio || null
-          }
-        ]);
+  const logInteraction = (message: string) => {
+    console.log('Interaction:', message);
+  };
 
-      if (error) {
-        console.error('Error logging to Supabase:', error);
-      }
+  const handleEmailCard = () => {
+    // Implement email functionality
+    console.log('Sending card to email...');
+  };
 
-      // Log to PostHog
-      captureEvent('voice_interaction', {
-        interaction_type: type,
-        content: content
-      });
-    } catch (err) {
-      console.error('Error logging interaction:', err);
-    }
-  }, []);
+  const configureWidget = (widget: HTMLElement) => {
+    widget.addEventListener('nameUpdate', ((event: CustomEvent) => {
+      updateCardData({ name: event.detail });
+      logInteraction(`Name updated: ${event.detail}`);
+    }) as EventListener);
 
-  const configureWidget = useCallback((widget: Element) => {
-    if (widget) {
-      widget.addEventListener('elevenlabs-convai:call', (event: any) => {
-        event.detail.config.clientTools = {
-          triggerName: ({ name }: { name: string }) => {
-            updateCardData({ name, wishes: cardData.wishes });
-            toast.success(`Welcome, ${name}!`);
-            logInteraction('name_update', { name });
-            return `Name set to ${name}`;
-          },
-          triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            const updatedWishes = [...cardData.wishes, itemName];
-            updateCardData({ name: cardData.name, wishes: updatedWishes });
-            toast.success(`Added ${itemName} to your wishlist!`);
-            logInteraction('wishlist_update', { itemKey, itemName });
-            return `Added ${itemName} to wishlist`;
-          },
-          emailCard: () => {
-            console.log('Email functionality coming soon');
-            toast.info('Email feature coming soon!');
-            return "Email feature is under development";
-          }
-        };
-      });
-
-      widget.addEventListener('elevenlabs-convai:message', (event: any) => {
-        const messageData = event.detail;
-        console.log('Message received:', messageData);
-
-        logInteraction('conversation_message', {
-          transcription: messageData.transcription,
-          response: messageData.response,
-          audio: messageData.audio
-        });
-      });
-    }
-  }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
+    widget.addEventListener('wishlistUpdate', ((event: CustomEvent) => {
+      updateCardData({ wishes: event.detail });
+      logInteraction(`Wishlist updated: ${event.detail.join(', ')}`);
+    }) as EventListener);
+  };
 
   useEffect(() => {
     const widget = document.querySelector('elevenlabs-convai');
     if (widget) {
       configureWidget(widget);
     }
-  }, [configureWidget]);
+  }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 relative">
+      <ChristmasTimer />
+      
       {/* ElevenLabs Widget */}
-      <div className="w-full max-w-2xl bg-white rounded-lg p-4 shadow-lg mb-8">
-        <elevenlabs-convai 
+      <div className="w-full max-w-2xl mx-auto relative z-20">
+        <elevenlabs-convai
           agent-id="xrfJ41NhW2YAQ44g5KXC"
           className="w-full h-[600px]"
-        ></elevenlabs-convai>
+        />
       </div>
-      
-      <ChristmasCard
-        {...cardData}
-        onEmailCard={handleEmailCard}
-      />
+
+      {/* Christmas Card */}
+      <div className="mt-8 w-full max-w-2xl mx-auto relative z-10">
+        <ChristmasCard
+          {...cardData}
+          onEmailCard={handleEmailCard}
+        />
+      </div>
     </div>
   );
 };
