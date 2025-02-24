@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { MessageHandler, type Message, type CardData } from '../services/messageHandler';
-import { ElevenLabsService } from '../services/elevenlabsService';
+import { useConversation } from '../hooks/useConversation';
 
 const Index: React.FC = () => {
   const [cardData, setCardData] = useState<CardData>({
@@ -9,8 +9,8 @@ const Index: React.FC = () => {
     wishes: [],
     location: ''
   });
-  const [isCallActive, setIsCallActive] = useState(false);
-  const elevenlabsService = ElevenLabsService.getInstance();
+
+  const { isActive, startConversation, endConversation } = useConversation();
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -32,25 +32,6 @@ const Index: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const handleStartCall = async () => {
-    try {
-      await elevenlabsService.startConversation();
-      setIsCallActive(true);
-    } catch (error) {
-      console.error('Failed to start call:', error);
-      setIsCallActive(false);
-    }
-  };
-
-  const handleEndCall = async () => {
-    try {
-      await elevenlabsService.endConversation();
-      setIsCallActive(false);
-    } catch (error) {
-      console.error('Failed to end call:', error);
-    }
-  };
-
   const handleEmailCard = () => {
     // Email functionality will be implemented later
     console.log('Email card functionality coming soon');
@@ -60,9 +41,9 @@ const Index: React.FC = () => {
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6">
       <ChristmasCard
         {...cardData}
-        isCallActive={isCallActive}
-        onStartCall={handleStartCall}
-        onEndCall={handleEndCall}
+        isCallActive={isActive}
+        onStartCall={startConversation}
+        onEndCall={endConversation}
         onEmailCard={handleEmailCard}
       />
     </div>
