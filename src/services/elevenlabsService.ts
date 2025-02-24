@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 
 export interface ElevenLabsCredentials {
@@ -48,6 +49,7 @@ export class ElevenLabsService {
   async startConversation(): Promise<void> {
     try {
       const credentials = await this.fetchCredentials();
+      console.log('Starting conversation with credentials:', credentials);
       
       // Send message to parent window to start conversation
       window.parent.postMessage({
