@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ElevenLabsService } from '../services/elevenlabsService';
+import { ElevenLabsService } from '../services/elevenlabs';
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
