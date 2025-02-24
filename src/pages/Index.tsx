@@ -26,6 +26,7 @@ const Index: React.FC = () => {
 
   const logInteraction = useCallback(async (type: string, content: any) => {
     try {
+      // Log to Supabase
       const { error } = await supabase
         .from('voice_interactions')
         .insert([
@@ -41,6 +42,7 @@ const Index: React.FC = () => {
         console.error('Error logging to Supabase:', error);
       }
 
+      // Log to PostHog
       captureEvent('voice_interaction', {
         interaction_type: type,
         content: content
@@ -55,17 +57,22 @@ const Index: React.FC = () => {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
         event.detail.config.clientTools = {
           triggerName: ({ name }: { name: string }) => {
-            updateCardData({ name, wishes: [...cardData.wishes] });
+            updateCardData({ name, wishes: cardData.wishes });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
-          triggerAddItemToWishlist: ({ itemName }: { itemKey: string, itemName: string }) => {
+          triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
             const updatedWishes = [...cardData.wishes, itemName];
             updateCardData({ name: cardData.name, wishes: updatedWishes });
             toast.success(`Added ${itemName} to your wishlist!`);
-            logInteraction('wishlist_update', { itemName });
+            logInteraction('wishlist_update', { itemKey, itemName });
             return `Added ${itemName} to wishlist`;
+          },
+          emailCard: () => {
+            console.log('Email functionality coming soon');
+            toast.info('Email feature coming soon!');
+            return "Email feature is under development";
           }
         };
       });
@@ -84,28 +91,37 @@ const Index: React.FC = () => {
   }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   useEffect(() => {
-    const widget = document.querySelector('elevenlabs-convai');
-    if (widget) {
-      configureWidget(widget);
-    }
+    const script = document.createElement('script');
+    script.src = 'https://elevenlabs.io/convai-widget/index.js';
+    script.async = true;
+    script.type = 'text/javascript';
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      const widget = document.querySelector('elevenlabs-convai');
+      if (widget) {
+        configureWidget(widget);
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
   }, [configureWidget]);
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
-      {/* ElevenLabs Widget */}
-      <div className="w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg mb-8">
-        <elevenlabs-convai 
-          agent-id="xrfJ41NhW2YAQ44g5KXC"
-          className="w-full h-[600px]"
-        />
-      </div>
+      {/* ElevenLabs Widget - Made larger and removed white background */}
+      <elevenlabs-convai 
+        agent-id="xrfJ41NhW2YAQ44g5KXC"
+        className="w-full max-w-4xl h-[700px] mb-8"
+      ></elevenlabs-convai>
       
-      <div className="w-full max-w-4xl"> {/* Increased max width for the card container */}
-        <ChristmasCard
-          {...cardData}
-          onEmailCard={handleEmailCard}
-        />
-      </div>
+      {/* Christmas Card */}
+      <ChristmasCard
+        {...cardData}
+        onEmailCard={handleEmailCard}
+      />
     </div>
   );
 };
