@@ -3,6 +3,8 @@ import { ElevenLabsCredentials, ConversationTokenResponse } from './types';
 
 export class ElevenLabsApiClient {
   async getSignedUrl(credentials: ElevenLabsCredentials): Promise<string> {
+    console.log('Getting signed URL for agent:', credentials.agent_id);
+    
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${credentials.agent_id}`,
       {
@@ -23,6 +25,7 @@ export class ElevenLabsApiClient {
       throw new Error('Invalid response: missing signed_url property');
     }
     
+    console.log('Successfully got signed URL');
     return data.signed_url;
   }
 
@@ -36,25 +39,7 @@ export class ElevenLabsApiClient {
       console.log(`Attempt ${attempts} of ${maxAttempts} to get conversation token...`);
 
       try {
-        // First, try to initialize the agent
-        const initResponse = await fetch(
-          `https://api.elevenlabs.io/v1/convai/agents/${credentials.agent_id}/initialize`,
-          {
-            method: 'POST',
-            headers: {
-              'xi-api-key': credentials.api_key,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (!initResponse.ok) {
-          console.warn(`Agent initialization failed with status ${initResponse.status}`);
-          const errorText = await initResponse.text();
-          throw new Error(`Failed to initialize agent: ${initResponse.status} - ${errorText}`);
-        }
-
-        // Then get the conversation token
+        // Using the /link endpoint directly without initialization
         const response = await fetch(
           `https://api.elevenlabs.io/v1/convai/agents/${credentials.agent_id}/link`,
           {
