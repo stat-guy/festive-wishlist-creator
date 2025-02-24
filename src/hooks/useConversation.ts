@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ElevenLabsService } from '../services/elevenlabsService';
 
 interface ConversationMessage {
@@ -7,10 +8,10 @@ interface ConversationMessage {
 }
 
 export const useConversation = () => {
-  const [isActive, setIsActive] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const elevenlabsService = ElevenLabsService.getInstance();
+  const elevenlabsService = useRef(ElevenLabsService.getInstance());
 
   // Handle incoming messages from the parent window
   useEffect(() => {
@@ -51,7 +52,7 @@ export const useConversation = () => {
       setIsInitializing(true);
       setError(null);
       console.log('useConversation: Starting conversation with Santa...');
-      await elevenlabsService.startConversation();
+      await elevenlabsService.current.startConversation();
     } catch (error) {
       console.error('useConversation: Failed to start conversation:', error);
       setError(error instanceof Error ? error.message : 'Failed to start conversation');
@@ -59,19 +60,19 @@ export const useConversation = () => {
     } finally {
       setIsInitializing(false);
     }
-  }, [elevenlabsService]);
+  }, []);
 
   const endConversation = useCallback(async () => {
     try {
       console.log('useConversation: Ending conversation with Santa...');
-      await elevenlabsService.endConversation();
+      await elevenlabsService.current.endConversation();
       setIsActive(false);
       setError(null);
     } catch (error) {
       console.error('useConversation: Failed to end conversation:', error);
       setError(error instanceof Error ? error.message : 'Failed to end conversation');
     }
-  }, [elevenlabsService]);
+  }, []);
 
   return {
     isActive,
