@@ -57,17 +57,17 @@ const Index: React.FC = () => {
           triggerName: ({ name }: { name: string }) => {
             updateCardData({ 
               name,
-              wishes: cardData.wishes // Preserve existing wishes
+              wishes: undefined // Don't modify wishes when updating name
             });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            const updatedWishes = [...cardData.wishes, itemName]; // Add new wish to existing wishes
+            // Create a new array with the existing wishes plus the new wish
             updateCardData({ 
-              name: cardData.name, // Preserve existing name
-              wishes: updatedWishes 
+              name: undefined, // Don't modify name when updating wishes
+              wishes: [itemName] // Pass as single item array to be merged with existing wishes
             });
             toast.success(`Added ${itemName} to your wishlist!`);
             logInteraction('wishlist_update', { itemKey, itemName });
@@ -95,22 +95,10 @@ const Index: React.FC = () => {
   }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://elevenlabs.io/convai-widget/index.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      const widget = document.querySelector('elevenlabs-convai');
-      if (widget) {
-        configureWidget(widget);
-      }
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    const widget = document.querySelector('elevenlabs-convai');
+    if (widget) {
+      configureWidget(widget);
+    }
   }, [configureWidget]);
 
   return (
