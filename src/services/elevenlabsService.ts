@@ -64,17 +64,34 @@ export class ElevenLabsService {
       const credentials = await this.fetchCredentials();
       console.log('ElevenLabsService: Got credentials, sending start message');
       
-      // Send message to parent window to start conversation
-      window.parent.postMessage({
-        type: 'START_CONVERSATION',
-        data: {
-          agentId: credentials.agent_id,
-          apiKey: credentials.api_key
-        }
-      }, '*');
-      
-      this.conversationState.isActive = true;
-      console.log('ElevenLabsService: Conversation started successfully');
+      return new Promise((resolve, reject) => {
+        // Setup one-time listener for response
+        const handleResponse = (event: MessageEvent) => {
+          if (event.data?.type === 'CONVERSATION_STARTED') {
+            console.log('ElevenLabsService: Received start confirmation');
+            window.removeEventListener('message', handleResponse);
+            this.conversationState.isActive = true;
+            resolve();
+          }
+        };
+
+        window.addEventListener('message', handleResponse);
+        
+        // Send message to parent window
+        window.parent.postMessage({
+          type: 'START_CONVERSATION',
+          data: {
+            agentId: credentials.agent_id,
+            apiKey: credentials.api_key
+          }
+        }, '*');
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          window.removeEventListener('message', handleResponse);
+          reject(new Error('Conversation start timeout'));
+        }, 5000);
+      });
     } catch (error) {
       console.error('ElevenLabsService: Error starting conversation:', error);
       throw error;
@@ -84,15 +101,32 @@ export class ElevenLabsService {
   async endConversation(): Promise<void> {
     try {
       console.log('ElevenLabsService: Ending conversation');
-      // Send message to parent window to end conversation
-      window.parent.postMessage({
-        type: 'END_CONVERSATION',
-        data: {}
-      }, '*');
-      
-      this.conversationState.isActive = false;
-      this.conversationState.conversationId = undefined;
-      console.log('ElevenLabsService: Conversation ended successfully');
+      return new Promise((resolve, reject) => {
+        // Setup one-time listener for response
+        const handleResponse = (event: MessageEvent) => {
+          if (event.data?.type === 'CONVERSATION_ENDED') {
+            console.log('ElevenLabsService: Received end confirmation');
+            window.removeEventListener('message', handleResponse);
+            this.conversationState.isActive = false;
+            this.conversationState.conversationId = undefined;
+            resolve();
+          }
+        };
+
+        window.addEventListener('message', handleResponse);
+        
+        // Send message to parent window
+        window.parent.postMessage({
+          type: 'END_CONVERSATION',
+          data: {}
+        }, '*');
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          window.removeEventListener('message', handleResponse);
+          reject(new Error('Conversation end timeout'));
+        }, 5000);
+      });
     } catch (error) {
       console.error('ElevenLabsService: Error ending conversation:', error);
       throw error;

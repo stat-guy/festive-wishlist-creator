@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ElevenLabsService } from '../services/elevenlabsService';
+import { toast } from '@/components/ui/use-toast';
 
 export const useConversation = () => {
   const [isActive, setIsActive] = useState(false);
@@ -23,12 +24,21 @@ export const useConversation = () => {
   const startConversation = useCallback(async () => {
     try {
       console.log('useConversation: Starting conversation with Santa...');
-      const result = await elevenlabsService.startConversation();
-      console.log('useConversation: Start conversation result:', result);
+      await elevenlabsService.startConversation();
+      console.log('useConversation: Conversation started successfully');
       setIsActive(true);
+      toast({
+        title: "Connected with Santa!",
+        description: "You can now talk with Santa.",
+      });
     } catch (error) {
       console.error('useConversation: Failed to start conversation:', error);
       setIsActive(false);
+      toast({
+        title: "Connection Failed",
+        description: "Could not connect to Santa. Please try again.",
+        variant: "destructive",
+      });
     }
   }, [elevenlabsService]);
 
@@ -40,6 +50,11 @@ export const useConversation = () => {
       setIsActive(false);
     } catch (error) {
       console.error('useConversation: Failed to end conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to end conversation. Please try again.",
+        variant: "destructive",
+      });
     }
   }, [elevenlabsService]);
 
