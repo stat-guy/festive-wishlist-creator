@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { Message, MessageProcessor } from '../services/messageProcessor';
 
@@ -48,12 +47,24 @@ export const useMessageHandler = () => {
     });
   }, []);
 
-  const updateCardData = useCallback(({ name, wishes }: { name: string; wishes: string[] }) => {
-    setCardData(prev => ({
-      ...prev,
-      name: name || prev.name,
-      wishes: wishes || prev.wishes
-    }));
+  const updateCardData = useCallback(({ name, wishes }: Partial<{ name: string; wishes: string[] }>) => {
+    setCardData(prev => {
+      // Handle name update
+      const updatedName = name !== undefined ? name : prev.name;
+      
+      // Handle wishes update by combining existing and new wishes
+      let updatedWishes = prev.wishes;
+      if (wishes) {
+        // Create a Set to remove duplicates and spread both arrays
+        updatedWishes = [...new Set([...prev.wishes, ...wishes])];
+      }
+
+      return {
+        ...prev,
+        name: updatedName,
+        wishes: updatedWishes
+      };
+    });
   }, []);
 
   useEffect(() => {
