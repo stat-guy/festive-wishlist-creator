@@ -56,13 +56,18 @@ const Index: React.FC = () => {
     if (widget) {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
         event.detail.config.clientTools = {
-          updateChristmasCard: ({ name, wishes }: { name: string; wishes: string[] }) => {
-            updateCardData({ name, wishes });
-            toast.success('Christmas card updated!');
-
-            // Log card update
-            logInteraction('card_update', { name, wishes });
-            return "Card updated successfully";
+          triggerName: ({ name }: { name: string }) => {
+            updateCardData({ name, wishes: cardData.wishes });
+            toast.success(`Welcome, ${name}!`);
+            logInteraction('name_update', { name });
+            return `Name set to ${name}`;
+          },
+          triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
+            const updatedWishes = [...cardData.wishes, itemName];
+            updateCardData({ name: cardData.name, wishes: updatedWishes });
+            toast.success(`Added ${itemName} to your wishlist!`);
+            logInteraction('wishlist_update', { itemKey, itemName });
+            return `Added ${itemName} to wishlist`;
           },
           emailCard: () => {
             console.log('Email functionality coming soon');
@@ -76,7 +81,6 @@ const Index: React.FC = () => {
         const messageData = event.detail;
         console.log('Message received:', messageData);
 
-        // Log each message interaction
         logInteraction('conversation_message', {
           transcription: messageData.transcription,
           response: messageData.response,
@@ -84,7 +88,7 @@ const Index: React.FC = () => {
         });
       });
     }
-  }, [updateCardData, logInteraction]);
+  }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
 
   useEffect(() => {
     const script = document.createElement('script');
