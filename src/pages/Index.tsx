@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
@@ -24,52 +24,52 @@ declare global {
 const Index: React.FC = () => {
   const { cardData, updateCardData } = useMessageHandler();
 
+  const handleEmailCard = useCallback(() => {
+    toast.info('Email functionality coming soon!');
+    console.log('Email card functionality coming soon');
+  }, []);
+
+  const configureWidget = useCallback((widget: Element) => {
+    if (widget) {
+      widget.addEventListener('elevenlabs-convai:call', (event: any) => {
+        event.detail.config.clientTools = {
+          updateChristmasCard: ({ name, wishes }: { name: string; wishes: string[] }) => {
+            updateCardData({ name, wishes });
+            toast.success('Christmas card updated!');
+            return "Card updated successfully";
+          },
+          emailCard: () => {
+            console.log('Email functionality coming soon');
+            toast.info('Email feature coming soon!');
+            return "Email feature is under development";
+          }
+        };
+      });
+
+      widget.addEventListener('elevenlabs-convai:message', (event: any) => {
+        console.log('Message received:', event.detail);
+      });
+    }
+  }, [updateCardData]);
+
   useEffect(() => {
-    // Add the ElevenLabs widget script
     const script = document.createElement('script');
     script.src = 'https://elevenlabs.io/convai-widget/index.js';
     script.async = true;
     script.type = 'text/javascript';
     document.body.appendChild(script);
 
-    // Configure widget once it's loaded
-    const configureWidget = () => {
+    script.onload = () => {
       const widget = document.querySelector('elevenlabs-convai');
       if (widget) {
-        // Listen for widget calls to set up client tools
-        widget.addEventListener('elevenlabs-convai:call', (event: any) => {
-          event.detail.config.clientTools = {
-            updateChristmasCard: ({ name, wishes }: { name: string; wishes: string[] }) => {
-              updateCardData({ name, wishes });
-              toast.success('Christmas card updated!');
-              return "Card updated successfully";
-            },
-            emailCard: () => {
-              console.log('Email functionality coming soon');
-              toast.info('Email feature coming soon!');
-              return "Email feature is under development";
-            }
-          };
-        });
-
-        // Listen for conversation messages
-        widget.addEventListener('elevenlabs-convai:message', (event: any) => {
-          console.log('Message received:', event.detail);
-        });
+        configureWidget(widget);
       }
     };
-
-    script.onload = configureWidget;
 
     return () => {
       document.body.removeChild(script);
     };
-  }, [updateCardData]);
-
-  const handleEmailCard = () => {
-    toast.info('Email functionality coming soon!');
-    console.log('Email card functionality coming soon');
-  };
+  }, [configureWidget]);
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 gap-8">
