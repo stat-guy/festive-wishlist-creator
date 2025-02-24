@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import { MessageHandler, type Message, type CardData } from '../services/messageHandler';
@@ -13,6 +14,8 @@ const Index: React.FC = () => {
   const { isActive, startConversation, endConversation } = useConversation();
 
   useEffect(() => {
+    console.log('Component mounted, setting up message handler');
+    
     const handleMessage = (event: MessageEvent) => {
       const message = event.data as Message;
       console.log('Received message:', message);
@@ -29,13 +32,18 @@ const Index: React.FC = () => {
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      console.log('Cleaning up message handler');
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   const handleEmailCard = () => {
-    // Email functionality will be implemented later
     console.log('Email card functionality coming soon');
   };
+
+  console.log('Rendering Index component with cardData:', cardData);
+  console.log('Conversation state:', { isActive });
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6">

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -21,6 +22,16 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
   onEmailCard
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  console.log('Rendering ChristmasCard with props:', {
+    name,
+    wishes,
+    location,
+    isCallActive,
+    hasStartCall: !!onStartCall,
+    hasEndCall: !!onEndCall,
+    hasEmailCard: !!onEmailCard
+  });
 
   if (!isOpen) {
     return (
