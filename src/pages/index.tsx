@@ -1,9 +1,11 @@
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
+import ChristmasTimer from '../components/ChristmasTimer';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { captureEvent } from '@/utils/analytics';
+import Snowfall from 'react-snowfall';
 
 declare global {
   namespace JSX {
@@ -114,16 +116,41 @@ const Index: React.FC = () => {
   }, [configureWidget]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-6 relative"
+      style={{
+        backgroundImage: "url('/converted_image.jpeg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Snow Effect */}
+      <Snowfall 
+        snowflakeCount={200}
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+        }}
+      />
+
+      {/* Christmas Timer */}
+      <ChristmasTimer />
+      
+      {/* ElevenLabs Widget */}
       <elevenlabs-convai 
         agent-id="xrfJ41NhW2YAQ44g5KXC"
-        className="w-full max-w-4xl h-[700px] mb-8"
+        className="w-full max-w-4xl h-[700px] mb-8 relative z-10"
       />
       
-      <ChristmasCard
-        {...cardData}
-        onEmailCard={handleEmailCard}
-      />
+      {/* Christmas Card */}
+      <div className="relative z-10">
+        <ChristmasCard
+          {...cardData}
+          onEmailCard={handleEmailCard}
+        />
+      </div>
     </div>
   );
 };
