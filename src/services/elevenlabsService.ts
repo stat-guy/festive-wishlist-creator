@@ -65,6 +65,9 @@ export class ElevenLabsService {
     }
 
     const data = await response.json();
+    if (!data.signed_url) {
+      throw new Error('Invalid response format: missing signed_url');
+    }
     return data.signed_url;
   }
 
@@ -89,6 +92,10 @@ export class ElevenLabsService {
     }
 
     const data = await response.json();
+    if (!data.token?.conversation_token) {
+      throw new Error('Invalid response format: missing token.conversation_token');
+    }
+
     return {
       conversationToken: data.token.conversation_token,
       agentId: data.agent_id
@@ -101,12 +108,17 @@ export class ElevenLabsService {
       const credentials = await this.fetchCredentials();
       console.log('ElevenLabsService: Fetched credentials');
 
-      const [signedUrl, tokenData] = await Promise.all([
-        this.getSignedUrl(),
-        this.getConversationToken()
-      ]);
+      // Get signed URL and token sequentially to handle potential errors better
+      const signedUrl = await this.getSignedUrl();
+      console.log('ElevenLabsService: Got signed URL');
 
-      console.log('ElevenLabsService: Got signed URL:', signedUrl);
+      const tokenData = await this.getConversationToken();
+      console.log('ElevenLabsService: Got conversation token');
+
+      if (!tokenData.conversationToken) {
+        throw new Error('Failed to initialize conversation: Missing conversation token');
+      }
+
       this.conversationState.signedUrl = signedUrl;
       this.conversationState.conversationToken = tokenData.conversationToken;
 
