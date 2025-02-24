@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
+
 interface ChristmasCardProps {
   name: string;
   wishes: string[];
@@ -11,6 +13,7 @@ interface ChristmasCardProps {
   onEndCall?: () => void;
   onEmailCard?: () => void;
 }
+
 const ChristmasCard: React.FC<ChristmasCardProps> = ({
   name,
   wishes,
@@ -105,4 +108,5 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
       </motion.div>
     </div>;
 };
+
 export default ChristmasCard;
