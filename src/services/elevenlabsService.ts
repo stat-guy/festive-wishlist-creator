@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 
 export interface ElevenLabsCredentials {
@@ -10,6 +9,7 @@ export interface ConversationState {
   isActive: boolean;
   conversationId?: string;
   signedUrl?: string;
+  conversationToken?: string;
 }
 
 export class ElevenLabsService {
@@ -19,38 +19,26 @@ export class ElevenLabsService {
     isActive: false
   };
 
-  private constructor() {
-    console.log('ElevenLabsService: Initializing service');
-  }
+  private constructor() {}
 
   static getInstance(): ElevenLabsService {
     if (!ElevenLabsService.instance) {
-      console.log('ElevenLabsService: Creating new instance');
       ElevenLabsService.instance = new ElevenLabsService();
     }
     return ElevenLabsService.instance;
   }
 
   private async fetchCredentials(): Promise<ElevenLabsCredentials> {
-    console.log('ElevenLabsService: Fetching credentials');
-    if (this.credentials) {
-      console.log('ElevenLabsService: Using cached credentials');
-      return this.credentials;
-    }
+    if (this.credentials) return this.credentials;
 
-    console.log('ElevenLabsService: Making Supabase query');
     const { data, error } = await supabase
       .from('elevenlabs_credentials')
       .select('*')
       .limit(1)
       .single();
 
-    if (error) {
-      console.error('ElevenLabsService: Failed to fetch credentials:', error);
-      throw new Error('Failed to fetch ElevenLabs credentials');
-    }
+    if (error) throw new Error('Failed to fetch ElevenLabs credentials');
     
-    console.log('ElevenLabsService: Successfully fetched credentials:', data);
     this.credentials = {
       api_key: data.api_key,
       agent_id: data.agent_id
@@ -59,8 +47,9 @@ export class ElevenLabsService {
     return this.credentials;
   }
 
-  private async getSignedUrl(credentials: ElevenLabsCredentials): Promise<string> {
-    console.log('ElevenLabsService: Getting signed URL');
+  private async getSignedUrl(): Promise<string> {
+    const credentials = await this.fetchCredentials();
+    
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${credentials.agent_id}`,
       {
@@ -76,84 +65,98 @@ export class ElevenLabsService {
     }
 
     const data = await response.json();
-    console.log('ElevenLabsService: Got signed URL:', data.signed_url);
     return data.signed_url;
+  }
+
+  private async getConversationToken(): Promise<{
+    conversationToken: string;
+    agentId: string;
+  }> {
+    const credentials = await this.fetchCredentials();
+    
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/agents/${credentials.agent_id}/link`,
+      {
+        method: 'GET',
+        headers: {
+          'xi-api-key': credentials.api_key
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to get conversation token');
+    }
+
+    const data = await response.json();
+    return {
+      conversationToken: data.token.conversation_token,
+      agentId: data.agent_id
+    };
   }
 
   async startConversation(): Promise<void> {
     try {
       console.log('ElevenLabsService: Starting conversation');
       const credentials = await this.fetchCredentials();
-      
-      // Get signed URL first
-      const signedUrl = await this.getSignedUrl(credentials);
-      this.conversationState.signedUrl = signedUrl;
-      
-      console.log('ElevenLabsService: Initializing conversation with signed URL');
-      
-      return new Promise((resolve, reject) => {
-        // Setup one-time listener for response
-        const handleResponse = (event: MessageEvent) => {
-          if (event.data?.type === 'CONVERSATION_STARTED') {
-            console.log('ElevenLabsService: Received start confirmation');
-            window.removeEventListener('message', handleResponse);
-            this.conversationState.isActive = true;
-            resolve();
-          }
-        };
+      console.log('ElevenLabsService: Fetched credentials');
 
-        window.addEventListener('message', handleResponse);
-        
-        // Send message to parent window with signed URL
-        window.parent.postMessage({
-          type: 'START_CONVERSATION',
-          data: {
-            signedUrl: this.conversationState.signedUrl
-          }
-        }, '*');
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          window.removeEventListener('message', handleResponse);
-          reject(new Error('Conversation start timeout'));
-        }, 5000);
-      });
+      const [signedUrl, tokenData] = await Promise.all([
+        this.getSignedUrl(),
+        this.getConversationToken()
+      ]);
+
+      console.log('ElevenLabsService: Got signed URL:', signedUrl);
+      this.conversationState.signedUrl = signedUrl;
+      this.conversationState.conversationToken = tokenData.conversationToken;
+
+      // Send initialization message to parent window
+      window.parent.postMessage({
+        type: 'INIT_CONVERSATION',
+        data: {
+          signedUrl,
+          agentId: tokenData.agentId,
+          conversationToken: tokenData.conversationToken,
+          apiKey: credentials.api_key
+        }
+      }, '*');
+      
+      this.conversationState.isActive = true;
+      console.log('ElevenLabsService: Conversation initialized');
     } catch (error) {
       console.error('ElevenLabsService: Error starting conversation:', error);
+      this.conversationState.isActive = false;
       throw error;
     }
   }
 
   async endConversation(): Promise<void> {
     try {
-      console.log('ElevenLabsService: Ending conversation');
-      return new Promise((resolve, reject) => {
-        // Setup one-time listener for response
-        const handleResponse = (event: MessageEvent) => {
-          if (event.data?.type === 'CONVERSATION_ENDED') {
-            console.log('ElevenLabsService: Received end confirmation');
-            window.removeEventListener('message', handleResponse);
-            this.conversationState.isActive = false;
-            this.conversationState.conversationId = undefined;
-            this.conversationState.signedUrl = undefined;
-            resolve();
+      if (this.conversationState.conversationId) {
+        const credentials = await this.fetchCredentials();
+        
+        await fetch(
+          `https://api.elevenlabs.io/v1/convai/conversations/${this.conversationState.conversationId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'xi-api-key': credentials.api_key
+            }
           }
-        };
+        );
+      }
 
-        window.addEventListener('message', handleResponse);
-        
-        // Send message to parent window
-        window.parent.postMessage({
-          type: 'END_CONVERSATION',
-          data: {}
-        }, '*');
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          window.removeEventListener('message', handleResponse);
-          reject(new Error('Conversation end timeout'));
-        }, 5000);
-      });
+      // Send message to parent window to end conversation
+      window.parent.postMessage({
+        type: 'END_CONVERSATION',
+        data: {}
+      }, '*');
+      
+      this.conversationState = {
+        isActive: false
+      };
+
+      console.log('ElevenLabsService: Conversation ended');
     } catch (error) {
       console.error('ElevenLabsService: Error ending conversation:', error);
       throw error;
