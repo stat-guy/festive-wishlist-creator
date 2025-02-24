@@ -1,3 +1,4 @@
+
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import ChristmasTimer from '../components/ChristmasTimer';
@@ -56,28 +57,25 @@ const Index: React.FC = () => {
       widget.addEventListener('elevenlabs-convai:call', (event: any) => {
         event.detail.config.clientTools = {
           triggerName: ({ name }: { name: string }) => {
-            updateCardData({ name });
+            updateCardData({ 
+              name,
+              wishes: undefined
+            });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            if (!cardData.wishes.includes(itemName)) {
-              updateCardData({ wishes: [itemName] }); // Send as single-item array
-              toast.success(`Added ${itemName} to your wishlist!`);
-              logInteraction('wishlist_update', { 
-                itemKey, 
-                itemName,
-                currentWishCount: cardData.wishes.length + 1 
-              });
-              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
-            } else {
-              toast.info(`${itemName} is already on your wishlist!`);
-              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
-            }
+            updateCardData({ 
+              name: undefined,
+              wishes: [itemName]
+            });
+            toast.success(`Added ${itemName} to your wishlist!`);
+            logInteraction('wishlist_update', { itemKey, itemName });
+            return `Added ${itemName} to wishlist`;
           },
           emailCard: () => {
-            toast.info('Email feature coming soon!');
+            handleEmailCard();
             return "Email feature is under development";
           }
         };
@@ -94,7 +92,7 @@ const Index: React.FC = () => {
         });
       });
     }
-  }, [cardData.wishes, updateCardData, logInteraction]);
+  }, [cardData.wishes, cardData.name, updateCardData, logInteraction, handleEmailCard]);
 
   useEffect(() => {
     const script = document.createElement('script');
