@@ -1,55 +1,24 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ChristmasCard from '../components/ChristmasCard';
-import { MessageHandler, type Message, type CardData } from '../services/messageHandler';
+import { useMessageHandler } from '../hooks/useMessageHandler';
 import { useConversation } from '../hooks/useConversation';
 
 const Index: React.FC = () => {
-  const [cardData, setCardData] = useState<CardData>({
-    name: '',
-    wishes: [],
-    location: ''
-  });
-
-  const { isActive, startConversation, endConversation } = useConversation();
-
-  useEffect(() => {
-    console.log('Component mounted, setting up message handler');
-    
-    const handleMessage = (event: MessageEvent) => {
-      const message = event.data as Message;
-      console.log('Received message:', message);
-
-      const updates = MessageHandler.processMessage(message);
-      if (updates) {
-        console.log('Processing updates:', updates);
-        setCardData(prev => ({
-          ...prev,
-          ...updates,
-          wishes: updates.wishes ? [...new Set([...prev.wishes, ...updates.wishes])] : prev.wishes
-        }));
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => {
-      console.log('Cleaning up message handler');
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
+  const { cardData } = useMessageHandler();
+  const { isActive, isInitializing, error, startConversation, endConversation } = useConversation();
 
   const handleEmailCard = () => {
+    // Email functionality will be implemented later
     console.log('Email card functionality coming soon');
   };
-
-  console.log('Rendering Index component with cardData:', cardData);
-  console.log('Conversation state:', { isActive });
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6">
       <ChristmasCard
         {...cardData}
         isCallActive={isActive}
+        isInitializing={isInitializing}
+        error={error}
         onStartCall={startConversation}
         onEndCall={endConversation}
         onEmailCard={handleEmailCard}
