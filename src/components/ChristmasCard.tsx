@@ -19,7 +19,7 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
       initial={{ scale: 0.9, opacity: 0 }} 
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02, transition: { duration: 0.3 } }}
-      className="w-[600px] mx-auto overflow-hidden relative p-2"
+      className="w-full max-w-[600px] mx-auto overflow-hidden relative p-2"
     >
       {/* Glossy Christmas Card with Candy Cane Border */}
       <div 
@@ -44,9 +44,9 @@ const ChristmasCard: React.FC<ChristmasCardProps> = ({
         <div className="absolute top-2 right-2 w-16 h-16 bg-contain bg-no-repeat opacity-80" style={{ backgroundImage: "url('/ornament-small.png')" }}></div>
         
         {/* Title with Festive Styling */}
-        <h1 className="text-4xl font-festive text-center mb-8 christmas-gradient font-bold text-glow">My Letter to Santa</h1>
+        <h1 className="text-3xl sm:text-4xl font-festive text-center mb-6 sm:mb-8 christmas-gradient font-bold text-glow">My Letter to Santa</h1>
         
-        <div className="space-y-6 font-handwritten text-xl leading-relaxed">
+        <div className="space-y-4 sm:space-y-6 font-handwritten text-lg sm:text-xl leading-relaxed">
           <p className="text-gray-800">Dear Santa, my name is <span className="text-red-600 font-semibold text-shadow">{name || '_______'}</span></p>
           
           <div>

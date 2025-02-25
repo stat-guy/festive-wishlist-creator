@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import ChristmasTimer from '../components/ChristmasTimer';
 import { useMessageHandler } from '../hooks/useMessageHandler';
@@ -19,6 +19,23 @@ declare global {
 
 const Index: React.FC = () => {
   const { cardData, updateCardData } = useMessageHandler();
+  const [snowflakeCount, setSnowflakeCount] = useState(300);
+  
+  // Adjust snowflake count based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setSnowflakeCount(window.innerWidth < 768 ? 150 : 300);
+    };
+    
+    // Set initial count
+    handleResize();
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleEmailCard = useCallback(() => {
     toast.info('Email functionality coming soon!');
@@ -65,18 +82,22 @@ const Index: React.FC = () => {
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            if (!cardData.wishes.includes(itemName)) {
+            // Check if item already exists
+            const itemExists = cardData.wishes.includes(itemName);
+            const currentCount = cardData.wishes.length;
+            const newCount = itemExists ? currentCount : currentCount + 1;
+            const itemText = newCount === 1 ? 'item' : 'items';
+            
+            if (!itemExists) {
+              // Add new item
               updateCardData({ wishes: [itemName] }); // Send as single-item array
               toast.success(`Added ${itemName} to your wishlist!`);
-              logInteraction('wishlist_update', { 
-                itemKey, 
-                itemName,
-                currentWishCount: cardData.wishes.length + 1 
-              });
-              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
+              logInteraction('wishlist_update', { itemKey, itemName, currentWishCount: newCount });
+              return `Added ${itemName} to wishlist. You now have ${newCount} ${itemText} on your list!`;
             } else {
+              // Item already exists
               toast.info(`${itemName} is already on your wishlist!`);
-              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
+              return `${itemName} is already on your wishlist. You have ${currentCount} ${itemText} listed.`;
             }
           },
           emailCard: () => {
@@ -100,27 +121,41 @@ const Index: React.FC = () => {
   }, [cardData.wishes, updateCardData, logInteraction]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://elevenlabs.io/convai-widget/index.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-
-    script.onload = () => {
+    // Check if script is already loaded to avoid duplicates
+    if (!document.querySelector('script[src="https://elevenlabs.io/convai-widget/index.js"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://elevenlabs.io/convai-widget/index.js';
+      script.async = true;
+      script.type = 'text/javascript';
+      
+      script.onload = () => {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget) {
+          configureWidget(widget);
+        }
+      };
+      
+      document.body.appendChild(script);
+      
+      return () => {
+        // Only remove if it exists
+        const existingScript = document.querySelector('script[src="https://elevenlabs.io/convai-widget/index.js"]');
+        if (existingScript && existingScript.parentNode) {
+          existingScript.parentNode.removeChild(existingScript);
+        }
+      };
+    } else {
+      // Script already exists, just configure widget
       const widget = document.querySelector('elevenlabs-convai');
       if (widget) {
         configureWidget(widget);
       }
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    }
   }, [configureWidget]);
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden"
       style={{
         backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/christmas-bg.jpg')",
         backgroundSize: 'cover',
@@ -131,13 +166,16 @@ const Index: React.FC = () => {
       {/* Glossy Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-red-900/20 backdrop-filter backdrop-blur-sm z-0"></div>
       
-      {/* Decorative Holiday Elements */}
-      <div className="absolute top-0 left-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/holly-decoration.png')] z-10 opacity-80"></div>
-      <div className="absolute bottom-0 right-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/ornament-decoration.png')] z-10 opacity-80"></div>
+      {/* Decorative Holiday Elements - Responsive sizes */}
+      <div className="absolute top-0 left-0 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-contain bg-no-repeat bg-[url('/holly-decoration.png')] z-10 opacity-80"></div>
+      <div className="absolute bottom-0 right-0 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-contain bg-no-repeat bg-[url('/ornament-decoration.png')] z-10 opacity-80"></div>
       
-      {/* Enhanced Snow Effect */}
+      {/* Enhanced Snow Effect - Responsive snowflake count based on screen size */}
       <Snowfall 
-        snowflakeCount={300}
+        snowflakeCount={snowflakeCount}
+        speed={[0.5, 2.0]} 
+        wind={[-0.5, 1.0]}
+        radius={[0.5, 2.5]}
         style={{
           position: 'fixed',
           width: '100vw',
@@ -151,21 +189,24 @@ const Index: React.FC = () => {
         <ChristmasTimer />
       </div>
       
-      {/* Content Container with Glassmorphism */}
-      <div className="relative z-30 w-full max-w-7xl mx-auto bg-white/10 backdrop-filter backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-2xl">
-        
-        {/* ElevenLabs Widget */}
-        <elevenlabs-convai 
-          agent-id="xrfJ41NhW2YAQ44g5KXC"
-          className="w-full max-w-4xl h-[700px] mb-8 mx-auto relative"
-        />
-        
-        {/* Christmas Card */}
-        <div className="relative">
-          <ChristmasCard
-            {...cardData}
-            onEmailCard={handleEmailCard}
-          />
+      {/* Main Content Layout - Side by side on large screens, stacked on mobile */}
+      <div className="relative z-30 w-full max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* ElevenLabs Widget Container */}
+          <div className="w-full lg:w-1/2 bg-white/10 backdrop-filter backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl">
+            <elevenlabs-convai 
+              agent-id="xrfJ41NhW2YAQ44g5KXC"
+              className="w-full h-[500px] sm:h-[600px] lg:h-[700px] mx-auto relative"
+            />
+          </div>
+          
+          {/* Christmas Card Container */}
+          <div className="w-full lg:w-1/2 bg-white/10 backdrop-filter backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl">
+            <ChristmasCard
+              {...cardData}
+              onEmailCard={handleEmailCard}
+            />
+          </div>
         </div>
       </div>
     </div>

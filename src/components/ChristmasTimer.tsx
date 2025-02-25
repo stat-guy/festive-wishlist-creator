@@ -69,58 +69,29 @@ const ChristmasTimer: React.FC = () => {
     }
   };
 
+  // Create a responsive timer box component to reduce duplication
+  const TimerBox = ({ value, label, color }: { value: number, label: string, color: "red" | "green" }) => (
+    <motion.div 
+      className={`bg-gradient-to-b ${color === "red" ? "from-red-500 to-red-700 border-red-400" : "from-green-500 to-green-700 border-green-400"} 
+                 rounded-xl p-2 sm:p-3 lg:p-4 w-16 sm:w-20 lg:w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border`}
+      whileHover="hover"
+      variants={timerBoxVariants}
+    >
+      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{value}</div>
+      <div className="text-xs sm:text-sm text-white font-medium">{label}</div>
+    </motion.div>
+  );
+
   return (
-    <div className="text-center mb-8 w-full">
-      <h2 className="text-white text-3xl font-bold mb-6 text-shadow">Time Until Christmas</h2>
-      <div className="flex flex-wrap justify-center gap-4 mx-auto max-w-6xl">
-        <motion.div 
-          className="bg-gradient-to-b from-red-500 to-red-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-red-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.months}</div>
-          <div className="text-sm text-white font-medium">Months</div>
-        </motion.div>
-        <motion.div 
-          className="bg-gradient-to-b from-green-500 to-green-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-green-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.weeks}</div>
-          <div className="text-sm text-white font-medium">Weeks</div>
-        </motion.div>
-        <motion.div 
-          className="bg-gradient-to-b from-red-500 to-red-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-red-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.days}</div>
-          <div className="text-sm text-white font-medium">Days</div>
-        </motion.div>
-        <motion.div 
-          className="bg-gradient-to-b from-green-500 to-green-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-green-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.hours}</div>
-          <div className="text-sm text-white font-medium">Hours</div>
-        </motion.div>
-        <motion.div 
-          className="bg-gradient-to-b from-red-500 to-red-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-red-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.minutes}</div>
-          <div className="text-sm text-white font-medium">Minutes</div>
-        </motion.div>
-        <motion.div 
-          className="bg-gradient-to-b from-green-500 to-green-700 rounded-xl p-4 w-24 shadow-lg backdrop-filter backdrop-blur-sm bg-opacity-80 border border-green-400"
-          whileHover="hover"
-          variants={timerBoxVariants}
-        >
-          <div className="text-3xl font-bold text-white">{timeLeft.seconds}</div>
-          <div className="text-sm text-white font-medium">Seconds</div>
-        </motion.div>
+    <div className="text-center mb-6 sm:mb-8 w-full">
+      <h2 className="text-white text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-shadow">Time Until Christmas</h2>
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 lg:gap-4 mx-auto max-w-6xl">
+        <TimerBox value={timeLeft.months} label="Months" color="red" />
+        <TimerBox value={timeLeft.weeks} label="Weeks" color="green" />
+        <TimerBox value={timeLeft.days} label="Days" color="red" />
+        <TimerBox value={timeLeft.hours} label="Hours" color="green" />
+        <TimerBox value={timeLeft.minutes} label="Minutes" color="red" />
+        <TimerBox value={timeLeft.seconds} label="Seconds" color="green" />
       </div>
     </div>
   );
