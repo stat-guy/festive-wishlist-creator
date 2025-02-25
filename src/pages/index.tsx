@@ -1,10 +1,11 @@
-
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
+import ChristmasTimer from '../components/ChristmasTimer';
 import { useMessageHandler } from '../hooks/useMessageHandler';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { captureEvent } from '@/utils/analytics';
+import Snowfall from 'react-snowfall';
 
 declare global {
   namespace JSX {
@@ -57,24 +58,28 @@ const Index: React.FC = () => {
           triggerName: ({ name }: { name: string }) => {
             updateCardData({ 
               name,
-              wishes: undefined // Don't modify wishes when updating name
+              wishes: undefined 
             });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            // Create a new array with the existing wishes plus the new wish
-            updateCardData({ 
-              name: undefined, // Don't modify name when updating wishes
-              wishes: [itemName] // Pass as single item array to be merged with existing wishes
-            });
-            toast.success(`Added ${itemName} to your wishlist!`);
-            logInteraction('wishlist_update', { itemKey, itemName });
-            return `Added ${itemName} to wishlist`;
+            if (!cardData.wishes.includes(itemName)) {
+              updateCardData({ wishes: [itemName] }); // Send as single-item array
+              toast.success(`Added ${itemName} to your wishlist!`);
+              logInteraction('wishlist_update', { 
+                itemKey, 
+                itemName,
+                currentWishCount: cardData.wishes.length + 1 
+              });
+              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
+            } else {
+              toast.info(`${itemName} is already on your wishlist!`);
+              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
+            }
           },
           emailCard: () => {
-            console.log('Email functionality coming soon');
             toast.info('Email feature coming soon!');
             return "Email feature is under development";
           }
@@ -92,7 +97,7 @@ const Index: React.FC = () => {
         });
       });
     }
-  }, [cardData.wishes, cardData.name, updateCardData, logInteraction]);
+  }, [cardData.wishes, updateCardData, logInteraction]);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -114,16 +119,52 @@ const Index: React.FC = () => {
   }, [configureWidget]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
-      <elevenlabs-convai 
-        agent-id="xrfJ41NhW2YAQ44g5KXC"
-        className="w-full max-w-4xl h-[700px] mb-8"
-      />
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
+      style={{
+        backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/christmas-bg.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Glossy Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-red-900/20 backdrop-filter backdrop-blur-sm z-0"></div>
       
-      <ChristmasCard
-        {...cardData}
-        onEmailCard={handleEmailCard}
+      {/* Decorative Holiday Elements */}
+      <div className="absolute top-0 left-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/holly-decoration.png')] z-10 opacity-80"></div>
+      <div className="absolute bottom-0 right-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/ornament-decoration.png')] z-10 opacity-80"></div>
+      
+      {/* Enhanced Snow Effect */}
+      <Snowfall 
+        snowflakeCount={300}
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 20,
+        }}
       />
+
+      {/* Content Container with Glassmorphism */}
+      <div className="relative z-30 w-full max-w-7xl mx-auto bg-white/10 backdrop-filter backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-2xl">
+        {/* Christmas Timer */}
+        <ChristmasTimer />
+        
+        {/* ElevenLabs Widget */}
+        <elevenlabs-convai 
+          agent-id="xrfJ41NhW2YAQ44g5KXC"
+          className="w-full max-w-4xl h-[700px] mb-8 mx-auto relative"
+        />
+        
+        {/* Christmas Card */}
+        <div className="relative">
+          <ChristmasCard
+            {...cardData}
+            onEmailCard={handleEmailCard}
+          />
+        </div>
+      </div>
     </div>
   );
 };
