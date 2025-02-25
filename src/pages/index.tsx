@@ -184,29 +184,27 @@ const Index: React.FC = () => {
         }}
       />
 
-      {/* Standalone Timer outside of the container */}
-      <div className="relative z-30 mb-8">
+      {/* Timer at the top of the page */}
+      <div className="relative z-30 mb-8 w-full max-w-4xl mx-auto">
         <ChristmasTimer />
       </div>
       
-      {/* Main Content Layout - Side by side on large screens, stacked on mobile */}
-      <div className="relative z-30 w-full max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start lg:items-center">
-          {/* ElevenLabs Widget Container - Reduced height and adjusted padding */}
-          <div className="w-full lg:w-[45%] xl:w-2/5 bg-white/10 backdrop-filter backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl">
-            <elevenlabs-convai 
-              agent-id="xrfJ41NhW2YAQ44g5KXC"
-              className="w-full h-[350px] sm:h-[400px] lg:h-[450px] mx-auto relative"
-            />
-          </div>
-          
-          {/* Christmas Card Container */}
-          <div className="w-full lg:w-[55%] xl:w-3/5 bg-white/10 backdrop-filter backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl">
-            <ChristmasCard
-              {...cardData}
-              onEmailCard={handleEmailCard}
-            />
-          </div>
+      {/* Vertical stacked layout with all components centered */}
+      <div className="relative z-30 w-full max-w-4xl mx-auto flex flex-col items-center gap-8">
+        {/* Christmas Card - No glassmorphic border */}
+        <div className="w-full">
+          <ChristmasCard
+            {...cardData}
+            onEmailCard={handleEmailCard}
+          />
+        </div>
+        
+        {/* ElevenLabs Widget - No glassmorphic border */}
+        <div className="w-full mb-8">
+          <elevenlabs-convai 
+            agent-id="xrfJ41NhW2YAQ44g5KXC"
+            className="w-full h-[350px] sm:h-[375px] md:h-[400px] mx-auto relative"
+          />
         </div>
       </div>
     </div>
