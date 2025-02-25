@@ -1,4 +1,3 @@
-
 import React, { useEffect, useCallback } from 'react';
 import ChristmasCard from '../components/ChristmasCard';
 import ChristmasTimer from '../components/ChristmasTimer';
@@ -59,23 +58,29 @@ const Index: React.FC = () => {
           triggerName: ({ name }: { name: string }) => {
             updateCardData({ 
               name,
-              wishes: undefined
+              wishes: undefined 
             });
             toast.success(`Welcome, ${name}!`);
             logInteraction('name_update', { name });
             return `Name set to ${name}`;
           },
           triggerAddItemToWishlist: ({ itemKey, itemName }: { itemKey: string, itemName: string }) => {
-            updateCardData({ 
-              name: undefined,
-              wishes: [itemName]
-            });
-            toast.success(`Added ${itemName} to your wishlist!`);
-            logInteraction('wishlist_update', { itemKey, itemName });
-            return `Added ${itemName} to wishlist`;
+            if (!cardData.wishes.includes(itemName)) {
+              updateCardData({ wishes: [itemName] }); // Send as single-item array
+              toast.success(`Added ${itemName} to your wishlist!`);
+              logInteraction('wishlist_update', { 
+                itemKey, 
+                itemName,
+                currentWishCount: cardData.wishes.length + 1 
+              });
+              return `Added ${itemName} to wishlist. You now have ${cardData.wishes.length + 1} ${cardData.wishes.length === 0 ? 'item' : 'items'} on your list!`;
+            } else {
+              toast.info(`${itemName} is already on your wishlist!`);
+              return `${itemName} is already on your wishlist. You have ${cardData.wishes.length} ${cardData.wishes.length === 1 ? 'item' : 'items'} listed.`;
+            }
           },
           emailCard: () => {
-            handleEmailCard();
+            toast.info('Email feature coming soon!');
             return "Email feature is under development";
           }
         };
@@ -92,7 +97,7 @@ const Index: React.FC = () => {
         });
       });
     }
-  }, [cardData.wishes, cardData.name, updateCardData, logInteraction, handleEmailCard]);
+  }, [cardData.wishes, updateCardData, logInteraction]);
 
   useEffect(() => {
     const script = document.createElement('script');
