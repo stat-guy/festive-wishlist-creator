@@ -146,10 +146,13 @@ const Index: React.FC = () => {
         }}
       />
 
+      {/* Standalone Timer outside of the container */}
+      <div className="relative z-30 mb-8">
+        <ChristmasTimer />
+      </div>
+      
       {/* Content Container with Glassmorphism */}
       <div className="relative z-30 w-full max-w-7xl mx-auto bg-white/10 backdrop-filter backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-2xl">
-        {/* Christmas Timer */}
-        <ChristmasTimer />
         
         {/* ElevenLabs Widget */}
         <elevenlabs-convai 
