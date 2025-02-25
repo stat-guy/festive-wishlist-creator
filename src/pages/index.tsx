@@ -191,17 +191,17 @@ const Index: React.FC = () => {
       
       {/* Main Content Layout - Side by side on large screens, stacked on mobile */}
       <div className="relative z-30 w-full max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* ElevenLabs Widget Container */}
-          <div className="w-full lg:w-1/2 bg-white/10 backdrop-filter backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start lg:items-center">
+          {/* ElevenLabs Widget Container - Reduced height and adjusted padding */}
+          <div className="w-full lg:w-[45%] xl:w-2/5 bg-white/10 backdrop-filter backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl">
             <elevenlabs-convai 
               agent-id="xrfJ41NhW2YAQ44g5KXC"
-              className="w-full h-[500px] sm:h-[600px] lg:h-[700px] mx-auto relative"
+              className="w-full h-[350px] sm:h-[400px] lg:h-[450px] mx-auto relative"
             />
           </div>
           
           {/* Christmas Card Container */}
-          <div className="w-full lg:w-1/2 bg-white/10 backdrop-filter backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl">
+          <div className="w-full lg:w-[55%] xl:w-3/5 bg-white/10 backdrop-filter backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl">
             <ChristmasCard
               {...cardData}
               onEmailCard={handleEmailCard}
