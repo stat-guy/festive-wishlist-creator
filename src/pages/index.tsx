@@ -115,40 +115,58 @@ const Index: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center p-6 relative"
+      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
       style={{
-        backgroundImage: "url('/converted_image.jpeg')",
+        backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/christmas-bg.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)' // Adding a slight overlay to ensure content remains readable
       }}
     >
-      {/* Snow Effect */}
+      {/* Glossy Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-red-900/20 backdrop-filter backdrop-blur-sm z-0"></div>
+      
+      {/* Decorative Holiday Elements */}
+      <div className="absolute top-0 left-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/holly-decoration.png')] z-10 opacity-80"></div>
+      <div className="absolute bottom-0 right-0 w-40 h-40 bg-contain bg-no-repeat bg-[url('/ornament-decoration.png')] z-10 opacity-80"></div>
+      
+      {/* Enhanced Snow Effect */}
       <Snowfall 
-        snowflakeCount={200}
+        snowflakeCount={300}
+        radius={[0.5, 3.0]}
+        speed={[0.5, 3.0]}
+        wind={[-0.5, 2.0]}
+        images={[
+          "/snowflake1.png",
+          "/snowflake2.png",
+          "/snowflake3.png"
+        ]}
         style={{
           position: 'fixed',
           width: '100vw',
           height: '100vh',
+          zIndex: 20,
         }}
       />
 
-      {/* Christmas Timer */}
-      <ChristmasTimer />
-      
-      {/* ElevenLabs Widget */}
-      <elevenlabs-convai 
-        agent-id="xrfJ41NhW2YAQ44g5KXC"
-        className="w-full max-w-4xl h-[700px] mb-8 relative z-10"
-      />
-      
-      {/* Christmas Card */}
-      <div className="relative z-10">
-        <ChristmasCard
-          {...cardData}
-          onEmailCard={handleEmailCard}
+      {/* Content Container with Glassmorphism */}
+      <div className="relative z-30 w-full max-w-7xl mx-auto bg-white/10 backdrop-filter backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-2xl">
+        {/* Christmas Timer */}
+        <ChristmasTimer />
+        
+        {/* ElevenLabs Widget */}
+        <elevenlabs-convai 
+          agent-id="xrfJ41NhW2YAQ44g5KXC"
+          className="w-full max-w-4xl h-[700px] mb-8 mx-auto relative"
         />
+        
+        {/* Christmas Card */}
+        <div className="relative">
+          <ChristmasCard
+            {...cardData}
+            onEmailCard={handleEmailCard}
+          />
+        </div>
       </div>
     </div>
   );

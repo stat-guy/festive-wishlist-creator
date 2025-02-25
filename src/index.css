@@ -99,3 +99,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 215, 0, 0.6);
+  }
+  
+  .christmas-gradient {
+    background: linear-gradient(135deg, #ff0000, #008000);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}

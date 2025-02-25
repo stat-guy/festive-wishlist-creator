@@ -21,6 +21,12 @@ export default {
 		extend: {
 			animation: {
 				'spin-slow': 'spin 3s linear infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'twinkle': 'twinkle 2s ease-in-out infinite',
+			},
+			fontFamily: {
+				'festive': ['Mountains of Christmas', 'cursive', 'serif'],
+				'handwritten': ['Caveat', 'cursive', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -80,6 +86,14 @@ export default {
 				'accordion-up': {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: '0' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'twinkle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
 				}
 			},
 			animation: {
