@@ -1,13 +1,6 @@
 {
   "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ],
+  // Remove the references section as it's not needed for Next.js
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
